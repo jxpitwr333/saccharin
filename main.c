@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <stdbool.h>
 
 typedef struct {
     char* data;
@@ -198,70 +199,82 @@ Scanner scanner;
 Arena arena;
 // End Globals
 
-int isAtEnd() {
-    return (scanner.current >= strlen(scanner.source)) ? 0 : 1;
+void initScanner(Scanner* scanner) {
+	scanner->current = 0;
+	scanner->line = 1;
+	scanner->start = 0;
+	scanner->tokens.count = 0;
 }
 
-const char* TOKENS[] = {
-    [TOKEN_LEFT_PAREN] 	= "(",
-    [TOKEN_RIGHT_PAREN] = ")",
-    [TOKEN_LEFT_BRACE] 	= "{",
-    [TOKEN_RIGHT_BRACE] = "}",
-    [TOKEN_COMMA] 		= ",",
-    [TOKEN_DOT] 		= ".",
-    [TOKEN_MINUS] 		= "-",
-    [TOKEN_PLUS] 		= "+",
-    [TOKEN_SEMICOLON] 	= ";",
-    [TOKEN_SLASH] 		= "/",
-    [TOKEN_STAR] 		= "*",
-    [TOKEN_BANG] 		= "!",
-    [TOKEN_BANG_EQUAL] 	= "!=",
-    [TOKEN_EQUAL] 		= "=",
-    [TOKEN_EQUAL_EQUAL] = "==",
-    [TOKEN_GREATER] 	= ">",
-    [TOKEN_GREATER_EQUAL] = ">=",
-    [TOKEN_LESS] 		= "<",
-    [TOKEN_LESS_EQUAL] 	= "<=",
-    [TOKEN_IDENTIFIER] 	= "identifier",
-    [TOKEN_STRING] 		= "string",
-    [TOKEN_NUMBER] 		= "number",
-    [TOKEN_AND] 		= "and",
-    [TOKEN_CLASS] 		= "class",
-    [TOKEN_ELSE] 		= "else",
-    [TOKEN_FALSE] 		= "false",
-    [TOKEN_FUN] 		= "fun",
-    [TOKEN_FOR] 		= "for",
-    [TOKEN_IF] 			= "if",
-    [TOKEN_NIL] 		= "nil",
-    [TOKEN_OR] 			= "or",
-    [TOKEN_PRINT] 		= "print",
-    [TOKEN_RETURN] 		= "return",
-    [TOKEN_SUPER] 		= "super",
-    [TOKEN_THIS] 		= "this",
-    [TOKEN_TRUE] 		= "true",
-    [TOKEN_VAR] 		= "var",
-    [TOKEN_WHILE] 		= "while",
-    [TOKEN_EOF] 		= "EOF",
+bool isAtEnd() {
+    return scanner.source[scanner.current] == '\0';
+}
+
+typedef struct {
+	const char* name;
+	TokenType token;
+} Keyword;
+
+static const Keyword KEYWORDS[] = {
+    {"and",TOKEN_AND},
+    {"class",TOKEN_CLASS},
+    {"else",TOKEN_ELSE},
+    {"false",TOKEN_FALSE},
+    {"fun",TOKEN_FUN},
+    {"for",TOKEN_FOR},
+    {"if",TOKEN_IF},
+    {"nil",TOKEN_NIL},
+    {"or",TOKEN_OR},
+    {"print",TOKEN_PRINT},
+    {"return",TOKEN_RETURN},
+    {"super",TOKEN_SUPER},
+    {"this",TOKEN_THIS},
+    {"true",TOKEN_TRUE},
+    {"var",TOKEN_VAR},
+    {"while",TOKEN_WHILE},
+};
+
+static const char* TOKEN_TYPE_NAMES[] = {
+    [TOKEN_LEFT_PAREN] = "LEFT_PAREN", [TOKEN_RIGHT_PAREN] = "RIGHT_PAREN",
+    [TOKEN_LEFT_BRACE] = "LEFT_BRACE", [TOKEN_RIGHT_BRACE] = "RIGHT_BRACE",
+    [TOKEN_COMMA] = "COMMA",           [TOKEN_DOT] = "DOT",
+    [TOKEN_MINUS] = "MINUS",           [TOKEN_PLUS] = "PLUS",
+    [TOKEN_SEMICOLON] = "SEMICOLON",   [TOKEN_SLASH] = "SLASH",
+    [TOKEN_STAR] = "STAR",             [TOKEN_BANG] = "BANG",
+    [TOKEN_BANG_EQUAL] = "BANG_EQUAL", [TOKEN_EQUAL] = "EQUAL",
+    [TOKEN_EQUAL_EQUAL] = "EQUAL_EQUAL",[TOKEN_GREATER] = "GREATER",
+    [TOKEN_GREATER_EQUAL] = "GREATER_EQUAL", [TOKEN_LESS] = "LESS",
+    [TOKEN_LESS_EQUAL] = "LESS_EQUAL", [TOKEN_IDENTIFIER] = "IDENTIFIER",
+    [TOKEN_STRING] = "STRING",         [TOKEN_NUMBER] = "NUMBER",
+    [TOKEN_AND] = "AND",               [TOKEN_CLASS] = "CLASS",
+    [TOKEN_ELSE] = "ELSE",             [TOKEN_FALSE] = "FALSE",
+    [TOKEN_FUN] = "FUN",               [TOKEN_FOR] = "FOR",
+    [TOKEN_IF] = "IF",                 [TOKEN_NIL] = "NIL",
+    [TOKEN_OR] = "OR",                 [TOKEN_PRINT] = "PRINT",
+    [TOKEN_RETURN] = "RETURN",         [TOKEN_SUPER] = "SUPER",
+    [TOKEN_THIS] = "THIS",             [TOKEN_TRUE] = "TRUE",
+    [TOKEN_VAR] = "VAR",               [TOKEN_WHILE] = "WHILE",
+    [TOKEN_EOF] = "EOF"
 };
 
 char* literalToString(Literal literal) {
     switch (literal.type) {
         case LITERAL_STRING:
-            return arena_sprintf(&arena, "%f", literal.as.number);
+            return literal.as.string ? literal.as.string : "";
             break; 
         case LITERAL_NUMBER:
-            return arena_sprintf(&arena, "%f", literal.as.number);
+            return arena_sprintf(&arena, "%g", literal.as.number);
             break;
         default: return ""; break;
     }
 }
 
 char* tokenToString(Token token) {
-    return arena_sprintf(&arena, "%s %s %s", TOKENS[token.type], token.lexeme, literalToString(token.literal));
+    return arena_sprintf(&arena, "%s %s %s", TOKEN_TYPE_NAMES[token.type], token.lexeme, literalToString(token.literal));
 }
 
 static void report(int line, char* where, char* message) {
-    fprintf(stderr, "[line %d] Error %s: %s/n", line, where, message);
+    fprintf(stderr, "[line %d] Error %s: %s\n", line, where, message);
     hadError = 1;
 }
 
@@ -273,11 +286,10 @@ char advance() {
     return scanner.source[scanner.current++];
 }
 
-int match(char expected) {
-    if (isAtEnd() || scanner.source[scanner.current] != expected) return 1;
-
+bool match(char expected) {
+    if (isAtEnd() || scanner.source[scanner.current] != expected) return false;
     scanner.current++;
-    return 0;
+    return true;
 }
 
 char peek() {
@@ -286,18 +298,18 @@ char peek() {
 }
 
 char peekNext() {
-    if (scanner.current + 1 >= strlen(scanner.source)) return '\0';
+    if (isAtEnd()) return '\0';
     return scanner.source[scanner.current + 1];
 }
 
-int isAlpha(char c) {
+bool isAlpha(char c) {
     return (c >= 'a' && c <= 'z') ||
         (c >= 'A' && c <= 'Z') ||
         c == '_';
 }
 
 void addTokenWithLiteral(TokenType type, Literal literal) {
-    char* text = arena_substring(&arena,scanner.source, scanner.start, scanner.current);
+    char* text = arena_substring(&arena,scanner.source, scanner.start, scanner.current - scanner.start);
     Token t = { .type = type, .lexeme = text, .literal = literal, .line = scanner.line };
     da_append(&scanner.tokens, t);
 }
@@ -306,38 +318,24 @@ void addToken(TokenType type) {
     addTokenWithLiteral(type, (Literal){.type = LITERAL_NONE});
 }
 
-int isDigit(char c) {
+bool isDigit(char c) {
     return c >= '0' && c <= '9';
 }
 
-int isAlphaNumeric(char c) {
+bool isAlphaNumeric(char c) {
     return isAlpha(c) || isDigit(c);
-}
-
-int string_equals(const char* a, const char* b) {
-    size_t alen, blen;
-    alen = strlen(a);
-    blen = strlen(b);
-
-    if (alen != blen) return 1;
-    for (size_t i = 0; i < alen; ++i) {
-        if (a[i] != b[i]) return 1;
-    }
-    return 0;
 }
 
 void identifier() {
     while (isAlphaNumeric(peek())) advance();
+    char* text = arena_substring(&arena, scanner.source, scanner.start, scanner.current - scanner.start);
 
-    const char* text = arena_substring(&arena, scanner.source, scanner.start, scanner.current);
-    for (size_t i = 0; i < sizeof(TOKENS) / sizeof(char *); ++i) {
-        if (string_equals(text, TOKENS[i])) {
-            TokenType type = (TokenType)i;
-            addToken(type);
+    for (size_t i = 0; i < sizeof(KEYWORDS) / sizeof(KEYWORDS[0]); ++i) {
+        if (strcmp(text, KEYWORDS[i].name) == 0) {
+            addToken(KEYWORDS[i].token);
             return;
         }
     }
-
     addToken(TOKEN_IDENTIFIER);
 }
 
@@ -356,7 +354,8 @@ void string() {
     advance();
 
     // trim the surrounding quotes.
-    char* value = arena_substring(&arena, scanner.source, scanner.start + 1, scanner.current - 1);
+    size_t length = scanner.current - scanner.start - 2;
+	char* value = arena_substring(&arena, scanner.source, scanner.start + 1, length);
     addTokenWithLiteral(TOKEN_STRING, (Literal){.type = LITERAL_STRING, .as.string = value});
 }
 
@@ -371,7 +370,7 @@ void number() {
         while (isDigit(peek())) advance();
     }
 
-    addTokenWithLiteral(TOKEN_NUMBER, (Literal){.type = LITERAL_NUMBER, .as.number = strtof(arena_substring(&arena, scanner.source, scanner.start, scanner.current), NULL)});
+    addTokenWithLiteral(TOKEN_NUMBER, (Literal){.type = LITERAL_NUMBER, .as.number = strtof(arena_substring(&arena, scanner.source, scanner.start, scanner.current - scanner.start), NULL)});
 }
 
 void scanToken() {
@@ -393,17 +392,17 @@ void scanToken() {
         case '<': addToken(match('=') ? TOKEN_LESS_EQUAL : TOKEN_LESS); break;
         case '>': addToken(match('=') ? TOKEN_GREATER_EQUAL : TOKEN_GREATER); break;
         case '/':
-                  if (match('/')) {
-                      while (peek() != '\n' && !isAtEnd()) advance();
-                  } else {
-                      addToken(TOKEN_SLASH);
-                  }
-                  break;
+			if (match('/')) {
+				while (peek() != '\n' && !isAtEnd()) advance();
+			} else {
+				addToken(TOKEN_SLASH);
+			}
+			break;
         case ' ':
         case '\r':
         case '\t':
-                  // ignore whitespace
-                  break;
+			// ignore whitespace
+			break;
 
         case '\n': scanner.line++; break;
         case '"': string(); break;
@@ -441,12 +440,43 @@ void run(char* source) {
     scanTokens();
 
     for (size_t i = 0; i < scanner.tokens.count; ++i) {
-
+        printf("%s\n", tokenToString(scanner.tokens.items[i]));
     }
 }
 
 int main(void) {
+	initScanner(&scanner);
     initArena(&arena, 1024 * 1024);
 
-    return hadError;
+	FILE* file = fopen("script.scc", "rb");
+
+	if (file == NULL) {
+		hadError = 1;
+		fprintf(stderr, "file failed to load, aborting.\n");
+		goto terminate;
+	}
+
+	fseek(file, 0, SEEK_END);
+    long fileSize = ftell(file);
+    rewind(file);
+
+    char *content = (char *)malloc(fileSize + 1);
+    if (content == NULL) {
+        fprintf(stderr, "memory allocation failed\n");
+        fclose(file);
+        goto terminate;
+    }
+
+    size_t bytesRead = fread(content, sizeof(char), fileSize, file);
+    
+    content[bytesRead] = '\0'; 
+
+	run(content);
+	
+	free(scanner.tokens.items);
+    free(content);
+    fclose(file);
+
+	terminate:
+    	return hadError;
 }
