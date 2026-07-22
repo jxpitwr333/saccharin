@@ -5,11 +5,257 @@
 #include <string.h>
 #include <stdbool.h>
 
-typedef struct {
+typedef struct Scanner Scanner;
+typedef struct Arena Arena;
+
+// GLOBALS
+int hadError = 0;
+Scanner scanner;
+Arena arena;
+// END GLOBALS
+
+// MACROS
+#define da_append(xs, x)                                                             \
+    do {                                                                             \
+        if ((xs)->count >= (xs)->capacity) {                                         \
+            if ((xs)->capacity == 0) (xs)->capacity = 256;                           \
+            else (xs)->capacity *= 2;                                                \
+            (xs)->items = realloc((xs)->items, (xs)->capacity*sizeof(*(xs)->items)); \
+        }                                                                            \
+        (xs)->items[(xs)->count++] = (x);                                            \
+    } while (0)
+// END MACROS
+
+// STRUCTS
+struct Arena {
     char* data;
     size_t capacity;
     size_t offset;
-} Arena;
+};
+
+typedef enum {
+    TOKEN_LEFT_PAREN,
+    TOKEN_RIGHT_PAREN,
+    TOKEN_LEFT_BRACE,
+    TOKEN_RIGHT_BRACE,
+    TOKEN_COMMA,
+    TOKEN_DOT,
+    TOKEN_MINUS,
+    TOKEN_PLUS,
+    TOKEN_SEMICOLON,
+    TOKEN_SLASH,
+    TOKEN_STAR,
+    TOKEN_BANG,
+    TOKEN_BANG_EQUAL,
+    TOKEN_EQUAL,
+    TOKEN_EQUAL_EQUAL,
+    TOKEN_GREATER,
+    TOKEN_GREATER_EQUAL,
+    TOKEN_LESS,
+    TOKEN_LESS_EQUAL,
+    TOKEN_IDENTIFIER,
+    TOKEN_STRING,
+    TOKEN_NUMBER,
+    TOKEN_AND,
+    TOKEN_CLASS,
+    TOKEN_ELSE,
+    TOKEN_FALSE,
+    TOKEN_FUN,
+    TOKEN_FOR,
+    TOKEN_IF,
+    TOKEN_NIL,
+    TOKEN_OR,
+    TOKEN_PRINT,
+    TOKEN_RETURN,
+    TOKEN_SUPER,
+    TOKEN_THIS,
+    TOKEN_TRUE,
+    TOKEN_VAR,
+    TOKEN_WHILE,
+    TOKEN_EOF
+} TokenType;
+
+typedef enum {
+    LITERAL_NONE,
+    LITERAL_STRING,
+    LITERAL_NUMBER,
+} LiteralType;
+
+typedef struct {
+    LiteralType type;
+    union {
+        char* string;
+        float number;
+    } as;
+} Literal;
+
+typedef struct {
+    Literal literal;
+    char* lexeme;
+    TokenType type;
+    int line;
+} Token;
+
+typedef enum {
+	EXPR_UNARY,
+    EXPR_BINARY,
+    EXPR_LITERAL,
+    EXPR_GROUPING
+} ExprType;
+
+typedef struct Expr Expr;
+
+struct Expr {
+    ExprType type;
+    union {
+        struct {
+            Expr* left;
+            Token operator;
+            Expr* right;
+        } binary;
+
+        struct {
+            Expr* expr;
+        } grouping;
+
+       Literal literal;
+
+        struct {
+            Token operator;
+            Expr* right;
+        } unary;
+    } as;
+};
+
+typedef struct {
+    Token* items;
+    size_t count;
+    size_t capacity;
+} TokenList;
+
+struct Scanner {
+    char* source;
+    TokenList tokens;
+    int start;
+    int current;
+    int line;
+};
+
+typedef struct {
+	const char* name;
+	TokenType token;
+} Keyword;
+// END STRUCTS
+
+// FORWARD DECLARATIONS
+void initArena(Arena* arena, size_t capacity);
+void freeArena(Arena* arena);
+void arenaReset(Arena* arena);
+char* arena_sprintf(Arena* arena, const char* fmt, ...);
+char* arena_substring(Arena* arena, const char* str, size_t start, size_t length);
+void initScanner(Scanner* scanner);
+bool isAtEnd();
+char* literalToString(Literal literal);
+char* tokenToString(Token token);
+static void report(int line, char* where, char* message);
+static void error(int line, char* message);
+char advance();
+bool match(char expected);
+char peek();
+char peekNext();
+bool isAlpha(char c);
+void addTokenWithLiteral(TokenType type, Literal literal);
+void addToken(TokenType type);
+bool isDigit(char c);
+bool isAlphaNumeric(char c);
+void identifier();
+void string();
+void number();
+void scanToken();
+void scanTokens();
+void run(char* source);
+// END FORWARD DECLARATIONS
+
+int main(void) {
+	initScanner(&scanner);
+    initArena(&arena, 1024 * 1024);
+
+	FILE* file = fopen("script.scc", "rb");
+
+	if (file == NULL) {
+		hadError = 1;
+		fprintf(stderr, "file failed to load, aborting.\n");
+		goto terminate;
+	}
+
+	fseek(file, 0, SEEK_END);
+    long fileSize = ftell(file);
+    rewind(file);
+
+    char *content = (char *)malloc(fileSize + 1);
+    if (content == NULL) {
+        fprintf(stderr, "memory allocation failed\n");
+        fclose(file);
+        goto terminate;
+    }
+
+    size_t bytesRead = fread(content, sizeof(char), fileSize, file);
+    
+    content[bytesRead] = '\0'; 
+
+	run(content);
+	
+	free(scanner.tokens.items);
+    free(content);
+    fclose(file);
+
+	terminate:
+    	return hadError;
+}
+
+// DEFINITIONS
+const Keyword KEYWORDS[] = {
+    {"and",TOKEN_AND},
+    {"class",TOKEN_CLASS},
+    {"else",TOKEN_ELSE},
+    {"false",TOKEN_FALSE},
+    {"fun",TOKEN_FUN},
+    {"for",TOKEN_FOR},
+    {"if",TOKEN_IF},
+    {"nil",TOKEN_NIL},
+    {"or",TOKEN_OR},
+    {"print",TOKEN_PRINT},
+    {"return",TOKEN_RETURN},
+    {"super",TOKEN_SUPER},
+    {"this",TOKEN_THIS},
+    {"true",TOKEN_TRUE},
+    {"var",TOKEN_VAR},
+    {"while",TOKEN_WHILE},
+};
+
+const char* TOKEN_TYPE_NAMES[] = {
+    [TOKEN_LEFT_PAREN] = "LEFT_PAREN", [TOKEN_RIGHT_PAREN] = "RIGHT_PAREN",
+    [TOKEN_LEFT_BRACE] = "LEFT_BRACE", [TOKEN_RIGHT_BRACE] = "RIGHT_BRACE",
+    [TOKEN_COMMA] = "COMMA",           [TOKEN_DOT] = "DOT",
+    [TOKEN_MINUS] = "MINUS",           [TOKEN_PLUS] = "PLUS",
+    [TOKEN_SEMICOLON] = "SEMICOLON",   [TOKEN_SLASH] = "SLASH",
+    [TOKEN_STAR] = "STAR",             [TOKEN_BANG] = "BANG",
+    [TOKEN_BANG_EQUAL] = "BANG_EQUAL", [TOKEN_EQUAL] = "EQUAL",
+    [TOKEN_EQUAL_EQUAL] = "EQUAL_EQUAL",[TOKEN_GREATER] = "GREATER",
+    [TOKEN_GREATER_EQUAL] = "GREATER_EQUAL", [TOKEN_LESS] = "LESS",
+    [TOKEN_LESS_EQUAL] = "LESS_EQUAL", [TOKEN_IDENTIFIER] = "IDENTIFIER",
+    [TOKEN_STRING] = "STRING",         [TOKEN_NUMBER] = "NUMBER",
+    [TOKEN_AND] = "AND",               [TOKEN_CLASS] = "CLASS",
+    [TOKEN_ELSE] = "ELSE",             [TOKEN_FALSE] = "FALSE",
+    [TOKEN_FUN] = "FUN",               [TOKEN_FOR] = "FOR",
+    [TOKEN_IF] = "IF",                 [TOKEN_NIL] = "NIL",
+    [TOKEN_OR] = "OR",                 [TOKEN_PRINT] = "PRINT",
+    [TOKEN_RETURN] = "RETURN",         [TOKEN_SUPER] = "SUPER",
+    [TOKEN_THIS] = "THIS",             [TOKEN_TRUE] = "TRUE",
+    [TOKEN_VAR] = "VAR",               [TOKEN_WHILE] = "WHILE",
+    [TOKEN_EOF] = "EOF"
+};
+
 
 void initArena(Arena* arena, size_t capacity) {
     arena->data = malloc(capacity);
@@ -74,131 +320,6 @@ char* arena_substring(Arena* arena, const char* str, size_t start, size_t length
     return sub;
 }
 
-typedef enum {
-    TOKEN_LEFT_PAREN,
-    TOKEN_RIGHT_PAREN,
-    TOKEN_LEFT_BRACE,
-    TOKEN_RIGHT_BRACE,
-    TOKEN_COMMA,
-    TOKEN_DOT,
-    TOKEN_MINUS,
-    TOKEN_PLUS,
-    TOKEN_SEMICOLON,
-    TOKEN_SLASH,
-    TOKEN_STAR,
-    TOKEN_BANG,
-    TOKEN_BANG_EQUAL,
-    TOKEN_EQUAL,
-    TOKEN_EQUAL_EQUAL,
-    TOKEN_GREATER,
-    TOKEN_GREATER_EQUAL,
-    TOKEN_LESS,
-    TOKEN_LESS_EQUAL,
-    TOKEN_IDENTIFIER,
-    TOKEN_STRING,
-    TOKEN_NUMBER,
-    TOKEN_AND,
-    TOKEN_CLASS,
-    TOKEN_ELSE,
-    TOKEN_FALSE,
-    TOKEN_FUN,
-    TOKEN_FOR,
-    TOKEN_IF,
-    TOKEN_NIL,
-    TOKEN_OR,
-    TOKEN_PRINT,
-    TOKEN_RETURN,
-    TOKEN_SUPER,
-    TOKEN_THIS,
-    TOKEN_TRUE,
-    TOKEN_VAR,
-    TOKEN_WHILE,
-    TOKEN_EOF
-} TokenType;
-
-
-typedef enum {
-    LITERAL_NONE,
-    LITERAL_STRING,
-    LITERAL_NUMBER,
-} LiteralType;
-
-typedef struct {
-    LiteralType type;
-    union {
-        char* string;
-        float number;
-    } as;
-} Literal;
-
-typedef struct {
-    Literal literal;
-    char* lexeme;
-    TokenType type;
-    int line;
-} Token;
-
-typedef enum {
-    EXPR_UNARY,
-    EXPR_BINARY,
-    EXPR_LITERAL,
-    EXPR_GROUPING
-} ExprType;
-
-typedef struct Expr Expr;
-
-struct Expr {
-    ExprType type;
-    union {
-        struct {
-            Expr* left;
-            Token operator;
-            Expr* right;
-        } binary;
-
-        struct {
-            Expr* expr;
-        } grouping;
-
-       Literal literal;
-
-        struct {
-            Token operator;
-            Expr* right;
-        } unary;
-    } as;
-};
-
-typedef struct {
-    Token* items;
-    size_t count;
-    size_t capacity;
-} TokenList;
-
-#define da_append(xs, x)                                                             \
-    do {                                                                             \
-        if ((xs)->count >= (xs)->capacity) {                                         \
-            if ((xs)->capacity == 0) (xs)->capacity = 256;                           \
-            else (xs)->capacity *= 2;                                                \
-            (xs)->items = realloc((xs)->items, (xs)->capacity*sizeof(*(xs)->items)); \
-        }                                                                            \
-        (xs)->items[(xs)->count++] = (x);                                            \
-    } while (0)
-
-typedef struct {
-    char* source;
-    TokenList tokens;
-    int start;
-    int current;
-    int line;
-} Scanner;
-
-// Globals
-int hadError = 0;
-Scanner scanner;
-Arena arena;
-// End Globals
-
 void initScanner(Scanner* scanner) {
 	scanner->current = 0;
 	scanner->line = 1;
@@ -209,53 +330,6 @@ void initScanner(Scanner* scanner) {
 bool isAtEnd() {
     return scanner.source[scanner.current] == '\0';
 }
-
-typedef struct {
-	const char* name;
-	TokenType token;
-} Keyword;
-
-static const Keyword KEYWORDS[] = {
-    {"and",TOKEN_AND},
-    {"class",TOKEN_CLASS},
-    {"else",TOKEN_ELSE},
-    {"false",TOKEN_FALSE},
-    {"fun",TOKEN_FUN},
-    {"for",TOKEN_FOR},
-    {"if",TOKEN_IF},
-    {"nil",TOKEN_NIL},
-    {"or",TOKEN_OR},
-    {"print",TOKEN_PRINT},
-    {"return",TOKEN_RETURN},
-    {"super",TOKEN_SUPER},
-    {"this",TOKEN_THIS},
-    {"true",TOKEN_TRUE},
-    {"var",TOKEN_VAR},
-    {"while",TOKEN_WHILE},
-};
-
-static const char* TOKEN_TYPE_NAMES[] = {
-    [TOKEN_LEFT_PAREN] = "LEFT_PAREN", [TOKEN_RIGHT_PAREN] = "RIGHT_PAREN",
-    [TOKEN_LEFT_BRACE] = "LEFT_BRACE", [TOKEN_RIGHT_BRACE] = "RIGHT_BRACE",
-    [TOKEN_COMMA] = "COMMA",           [TOKEN_DOT] = "DOT",
-    [TOKEN_MINUS] = "MINUS",           [TOKEN_PLUS] = "PLUS",
-    [TOKEN_SEMICOLON] = "SEMICOLON",   [TOKEN_SLASH] = "SLASH",
-    [TOKEN_STAR] = "STAR",             [TOKEN_BANG] = "BANG",
-    [TOKEN_BANG_EQUAL] = "BANG_EQUAL", [TOKEN_EQUAL] = "EQUAL",
-    [TOKEN_EQUAL_EQUAL] = "EQUAL_EQUAL",[TOKEN_GREATER] = "GREATER",
-    [TOKEN_GREATER_EQUAL] = "GREATER_EQUAL", [TOKEN_LESS] = "LESS",
-    [TOKEN_LESS_EQUAL] = "LESS_EQUAL", [TOKEN_IDENTIFIER] = "IDENTIFIER",
-    [TOKEN_STRING] = "STRING",         [TOKEN_NUMBER] = "NUMBER",
-    [TOKEN_AND] = "AND",               [TOKEN_CLASS] = "CLASS",
-    [TOKEN_ELSE] = "ELSE",             [TOKEN_FALSE] = "FALSE",
-    [TOKEN_FUN] = "FUN",               [TOKEN_FOR] = "FOR",
-    [TOKEN_IF] = "IF",                 [TOKEN_NIL] = "NIL",
-    [TOKEN_OR] = "OR",                 [TOKEN_PRINT] = "PRINT",
-    [TOKEN_RETURN] = "RETURN",         [TOKEN_SUPER] = "SUPER",
-    [TOKEN_THIS] = "THIS",             [TOKEN_TRUE] = "TRUE",
-    [TOKEN_VAR] = "VAR",               [TOKEN_WHILE] = "WHILE",
-    [TOKEN_EOF] = "EOF"
-};
 
 char* literalToString(Literal literal) {
     switch (literal.type) {
@@ -444,39 +518,23 @@ void run(char* source) {
     }
 }
 
-int main(void) {
-	initScanner(&scanner);
-    initArena(&arena, 1024 * 1024);
+void printAst(Expr* expr) {
+	if (!expr) return;
 
-	FILE* file = fopen("script.scc", "rb");
+	switch(expr->type) {
+		case EXPR_UNARY: 
+			literalToString(expr->as.literal);
+			break;
+		case EXPR_BINARY: 
 
-	if (file == NULL) {
-		hadError = 1;
-		fprintf(stderr, "file failed to load, aborting.\n");
-		goto terminate;
+			break;
+		case EXPR_LITERAL: 
+
+			break;
+		case EXPR_GROUPING: 
+
+			break;
+
 	}
-
-	fseek(file, 0, SEEK_END);
-    long fileSize = ftell(file);
-    rewind(file);
-
-    char *content = (char *)malloc(fileSize + 1);
-    if (content == NULL) {
-        fprintf(stderr, "memory allocation failed\n");
-        fclose(file);
-        goto terminate;
-    }
-
-    size_t bytesRead = fread(content, sizeof(char), fileSize, file);
-    
-    content[bytesRead] = '\0'; 
-
-	run(content);
-	
-	free(scanner.tokens.items);
-    free(content);
-    fclose(file);
-
-	terminate:
-    	return hadError;
 }
+// END DEFINITIONS
