@@ -6,12 +6,16 @@
 #include <stdbool.h>
 
 typedef struct Scanner Scanner;
+typedef struct Parser Parser;
 typedef struct Arena Arena;
 
 // GLOBALS
 int hadError = 0;
+int panicMode = 0;
 Scanner scanner;
-Arena arena;
+Parser parser;
+Arena stringArena;
+Arena exprArena;
 // END GLOBALS
 
 // MACROS
@@ -24,6 +28,8 @@ Arena arena;
         }                                                                            \
         (xs)->items[(xs)->count++] = (x);                                            \
     } while (0)
+
+#define MEBIBYTE 1048576
 // END MACROS
 
 // STRUCTS
@@ -79,6 +85,7 @@ typedef enum {
     LITERAL_NONE,
     LITERAL_STRING,
     LITERAL_NUMBER,
+    LITERAL_BOOLEAN
 } LiteralType;
 
 typedef struct {
@@ -86,6 +93,7 @@ typedef struct {
     union {
         char* string;
         float number;
+        bool boolean;
     } as;
 } Literal;
 
@@ -145,41 +153,68 @@ typedef struct {
 	const char* name;
 	TokenType token;
 } Keyword;
+
+struct Parser {
+    TokenList tokens;
+    int current;
+};
+
 // END STRUCTS
 
 // FORWARD DECLARATIONS
 void initArena(Arena* arena, size_t capacity);
 void freeArena(Arena* arena);
 void arenaReset(Arena* arena);
+void* arena_alloc(Arena* arena, size_t size);
 char* arena_sprintf(Arena* arena, const char* fmt, ...);
 char* arena_substring(Arena* arena, const char* str, size_t start, size_t length);
 void initScanner(Scanner* scanner);
-bool isAtEnd();
+bool isAtEnd(void);
 char* literalToString(Literal literal);
 char* tokenToString(Token token);
 static void report(int line, char* where, char* message);
 static void error(int line, char* message);
-char advance();
+char advance(void);
 bool match(char expected);
-char peek();
-char peekNext();
+char peek(void);
+char peekNext(void);
 bool isAlpha(char c);
 void addTokenWithLiteral(TokenType type, Literal literal);
 void addToken(TokenType type);
 bool isDigit(char c);
 bool isAlphaNumeric(char c);
-void identifier();
-void string();
-void number();
-void scanToken();
-void scanTokens();
+void identifier(void);
+void string(void);
+void number(void);
+void scanToken(void);
+void scanTokens(void);
 void run(char* source);
+void printAst(Expr* expr);
+Expr* newUnaryExpr(Token operator, Expr* right);
+Expr* newBinaryExpr(Expr* left, Token operator, Expr* right);
+Expr* newLiteralExpr(Literal literal);
+Expr* newGroupingExpr(Expr* group);
+Token tokenPeek(void);
+bool parserIsAtEnd();
+bool check(TokenType type);
+Token previous(void);
+Token tokenAdvance(void);
+bool tokenMatch(TokenType type);
+bool va_match(size_t count, ...);
+Expr* expression(void);
+Expr* equality(void);
+Expr* comparison(void);
+Expr* term(void);
+Expr* factor(void);
+Expr* unary(void);
+Expr* primary(void);
+Token expect(TokenType type, const char* error_msg);
+void parserError(Token token, const char* message);
+void synchronize(void);
+
 // END FORWARD DECLARATIONS
 
 int main(void) {
-	initScanner(&scanner);
-    initArena(&arena, 1024 * 1024);
-
 	FILE* file = fopen("script.scc", "rb");
 
 	if (file == NULL) {
@@ -194,18 +229,24 @@ int main(void) {
 
     char *content = (char *)malloc(fileSize + 1);
     if (content == NULL) {
+        hadError = 1;
         fprintf(stderr, "memory allocation failed\n");
         fclose(file);
         goto terminate;
     }
 
     size_t bytesRead = fread(content, sizeof(char), fileSize, file);
-    
-    content[bytesRead] = '\0'; 
+    initScanner(&scanner);
+    initArena(&stringArena, MEBIBYTE);
+    initArena(&exprArena, MEBIBYTE);
+
+    content[bytesRead] = '\0';
 
 	run(content);
-	
+
 	free(scanner.tokens.items);
+	freeArena(&stringArena);
+	freeArena(&exprArena);
     free(content);
     fclose(file);
 
@@ -274,6 +315,19 @@ void arenaReset(Arena* arena) {
     arena->offset = 0;
 }
 
+void* arena_alloc(Arena* arena, size_t size) {
+    size_t alignedOffset = (arena->offset + 7) & ~7;
+
+    if (alignedOffset + size > arena->capacity) {
+        fprintf(stderr, "out of memory!\n");
+        return NULL;
+    }
+
+    void* ptr = &arena->data[alignedOffset];
+    arena->offset = alignedOffset + size;
+    return ptr;
+}
+
 char* arena_sprintf(Arena* arena, const char* fmt, ...) {
     va_list args, args_copy;
     va_start(args, fmt);
@@ -282,17 +336,20 @@ char* arena_sprintf(Arena* arena, const char* fmt, ...) {
     int needed = vsnprintf(NULL, 0, fmt, args);
     va_end(args);
 
-    if (needed < 0 || arena->offset + needed + 1 > arena->capacity) {
+    if (needed < 0) {
         va_end(args_copy);
-        printf("out of memory!\n");
-        return NULL; 
+        return NULL;
     }
 
-    char* str = &arena->data[arena->offset];
+    char* str = (char*)arena_alloc(arena, needed + 1);
+    if (!str) {
+        va_end(args_copy);
+        return NULL;
+    }
+
     vsnprintf(str, needed + 1, fmt, args_copy);
     va_end(args_copy);
 
-    arena->offset += needed + 1;
     return str;
 }
 
@@ -301,22 +358,19 @@ char* arena_substring(Arena* arena, const char* str, size_t start, size_t length
 
     size_t str_len = strlen(str);
     if (start >= str_len) {
-        return arena_sprintf(arena, ""); 
+        return arena_sprintf(arena, "");
     }
 
     if (start + length > str_len) {
         length = str_len - start;
     }
 
-    if (arena->offset + length + 1 > arena->capacity) {
-        return NULL;
-    }
+    char* sub = (char*)arena_alloc(arena, length + 1);
+    if (!sub) return NULL;
 
-    char* sub = &arena->data[arena->offset];
     memcpy(sub, str + start, length);
     sub[length] = '\0';
 
-    arena->offset += length + 1;
     return sub;
 }
 
@@ -327,7 +381,7 @@ void initScanner(Scanner* scanner) {
 	scanner->tokens.count = 0;
 }
 
-bool isAtEnd() {
+bool isAtEnd(void) {
     return scanner.source[scanner.current] == '\0';
 }
 
@@ -335,16 +389,19 @@ char* literalToString(Literal literal) {
     switch (literal.type) {
         case LITERAL_STRING:
             return literal.as.string ? literal.as.string : "";
-            break; 
+            break;
         case LITERAL_NUMBER:
-            return arena_sprintf(&arena, "%g", literal.as.number);
+            return arena_sprintf(&stringArena, "%g", literal.as.number);
+            break;
+        case LITERAL_BOOLEAN:
+            return arena_sprintf(&stringArena, "%s", literal.as.boolean ? "TRUE" : "FALSE");
             break;
         default: return ""; break;
     }
 }
 
 char* tokenToString(Token token) {
-    return arena_sprintf(&arena, "%s %s %s", TOKEN_TYPE_NAMES[token.type], token.lexeme, literalToString(token.literal));
+    return arena_sprintf(&stringArena, "%s %s %s", TOKEN_TYPE_NAMES[token.type], token.lexeme, literalToString(token.literal));
 }
 
 static void report(int line, char* where, char* message) {
@@ -356,7 +413,7 @@ static void error(int line, char* message) {
     report(line, "", message);
 }
 
-char advance() {
+char advance(void) {
     return scanner.source[scanner.current++];
 }
 
@@ -366,12 +423,12 @@ bool match(char expected) {
     return true;
 }
 
-char peek() {
+char peek(void) {
     if (isAtEnd()) return '\0';
     return scanner.source[scanner.current];
 }
 
-char peekNext() {
+char peekNext(void) {
     if (isAtEnd()) return '\0';
     return scanner.source[scanner.current + 1];
 }
@@ -383,7 +440,7 @@ bool isAlpha(char c) {
 }
 
 void addTokenWithLiteral(TokenType type, Literal literal) {
-    char* text = arena_substring(&arena,scanner.source, scanner.start, scanner.current - scanner.start);
+    char* text = arena_substring(&stringArena,scanner.source, scanner.start, scanner.current - scanner.start);
     Token t = { .type = type, .lexeme = text, .literal = literal, .line = scanner.line };
     da_append(&scanner.tokens, t);
 }
@@ -400,9 +457,9 @@ bool isAlphaNumeric(char c) {
     return isAlpha(c) || isDigit(c);
 }
 
-void identifier() {
+void identifier(void) {
     while (isAlphaNumeric(peek())) advance();
-    char* text = arena_substring(&arena, scanner.source, scanner.start, scanner.current - scanner.start);
+    char* text = arena_substring(&stringArena, scanner.source, scanner.start, scanner.current - scanner.start);
 
     for (size_t i = 0; i < sizeof(KEYWORDS) / sizeof(KEYWORDS[0]); ++i) {
         if (strcmp(text, KEYWORDS[i].name) == 0) {
@@ -413,7 +470,7 @@ void identifier() {
     addToken(TOKEN_IDENTIFIER);
 }
 
-void string() {
+void string(void) {
     while (peek() != '"' && !isAtEnd()) {
         if (peek() == '\n') scanner.line++;
         advance();
@@ -429,11 +486,11 @@ void string() {
 
     // trim the surrounding quotes.
     size_t length = scanner.current - scanner.start - 2;
-	char* value = arena_substring(&arena, scanner.source, scanner.start + 1, length);
+	char* value = arena_substring(&stringArena, scanner.source, scanner.start + 1, length);
     addTokenWithLiteral(TOKEN_STRING, (Literal){.type = LITERAL_STRING, .as.string = value});
 }
 
-void number() {
+void number(void) {
     while (isDigit(peek())) advance();
 
     // look for a fractional part.
@@ -444,10 +501,10 @@ void number() {
         while (isDigit(peek())) advance();
     }
 
-    addTokenWithLiteral(TOKEN_NUMBER, (Literal){.type = LITERAL_NUMBER, .as.number = strtof(arena_substring(&arena, scanner.source, scanner.start, scanner.current - scanner.start), NULL)});
+    addTokenWithLiteral(TOKEN_NUMBER, (Literal){.type = LITERAL_NUMBER, .as.number = strtof(arena_substring(&stringArena, scanner.source, scanner.start, scanner.current - scanner.start), NULL)});
 }
 
-void scanToken() {
+void scanToken(void) {
     char c = advance();
 
     switch(c) {
@@ -492,7 +549,7 @@ void scanToken() {
     }
 }
 
-void scanTokens() {
+void scanTokens(void) {
     while (!isAtEnd()) {
         scanner.start = scanner.current;
         scanToken();
@@ -518,23 +575,236 @@ void run(char* source) {
     }
 }
 
-void printAst(Expr* expr) {
-	if (!expr) return;
-
-	switch(expr->type) {
-		case EXPR_UNARY: 
-			literalToString(expr->as.literal);
-			break;
-		case EXPR_BINARY: 
-
-			break;
-		case EXPR_LITERAL: 
-
-			break;
-		case EXPR_GROUPING: 
-
-			break;
-
-	}
+Expr* newUnaryExpr(Token operator, Expr* right) {
+    Expr* expr = arena_alloc(&exprArena, sizeof(Expr));
+    expr->type = EXPR_UNARY;
+    expr->as.unary.operator = operator;
+    expr->as.unary.right = right;
+    return expr;
 }
+
+Expr* newBinaryExpr(Expr* left, Token operator, Expr* right) {
+    Expr* expr = arena_alloc(&exprArena, sizeof(Expr));
+    expr->type = EXPR_BINARY;
+    expr->as.binary.left = left;
+    expr->as.binary.operator = operator;
+    expr->as.binary.right = right;
+    return expr;
+}
+
+Expr* newLiteralExpr(Literal literal) {
+    Expr* expr = arena_alloc(&exprArena, sizeof(Expr));
+    expr->type = EXPR_LITERAL;
+    expr->as.literal = literal;
+    return expr;
+}
+
+Expr* newGroupingExpr(Expr* group) {
+    Expr* expr = arena_alloc(&exprArena, sizeof(Expr));
+    expr->type = EXPR_GROUPING;
+    expr->as.grouping.expr = group;
+    return expr;
+}
+
+void printAst(Expr* expr) {
+    if (!expr) return;
+
+    switch (expr->type) {
+        case EXPR_LITERAL:
+            printf("%s", literalToString(expr->as.literal));
+            break;
+        case EXPR_UNARY:
+            printf("(%s ", expr->as.unary.operator.lexeme);
+            printAst(expr->as.unary.right);
+            printf(")");
+            break;
+        case EXPR_BINARY:
+            printf("(");
+            printAst(expr->as.binary.left);
+            printf(" %s ", expr->as.binary.operator.lexeme);
+            printAst(expr->as.binary.right);
+            printf(")");
+            break;
+        case EXPR_GROUPING:
+            printf("(group ");
+            printAst(expr->as.grouping.expr);
+            printf(")");
+            break;
+    }
+}
+
+Token tokenPeek(void) {
+    return parser.tokens.items[parser.current];
+}
+
+bool parserIsAtEnd() {
+  return tokenPeek().type == TOKEN_EOF;
+}
+
+bool check(TokenType type) {
+    if (parserIsAtEnd()) return false;
+    return tokenPeek().type == type;
+}
+
+Token previous(void) {
+    return parser.tokens.items[parser.current - 1];
+}
+
+Token tokenAdvance(void) {
+    if (!parserIsAtEnd()) parser.current++;
+    return previous();
+}
+
+bool tokenMatch(TokenType type) {
+    if (check(type)) {
+        tokenAdvance();
+        return true;
+    }
+    return false;
+}
+
+bool va_match(size_t count, ...) {
+    va_list args;
+    va_start(args, count);
+
+    for (size_t i = 0; i < count; ++i) {
+        TokenType type = va_arg(args, TokenType);
+
+        if (check(type)) {
+            tokenAdvance();
+            va_end(args);
+            return true;
+        }
+    }
+
+    va_end(args);
+    return false;
+}
+
+Expr* expression(void) {
+    return equality();
+}
+
+Expr* equality(void) {
+    Expr* expr = comparison();
+    while (va_match(2, TOKEN_BANG_EQUAL, TOKEN_EQUAL_EQUAL)) {
+        Token operator = previous();
+        Expr* right = comparison();
+        expr = newBinaryExpr(expr, operator, right);
+    }
+    return expr;
+}
+
+Expr* comparison(void) {
+  Expr* expr = term();
+  while (va_match(4, TOKEN_GREATER, TOKEN_GREATER_EQUAL, TOKEN_LESS, TOKEN_LESS_EQUAL)) {
+    Token operator = previous();
+    Expr* right = term();
+    expr = newBinaryExpr(expr, operator, right);
+  }
+
+  return expr;
+}
+
+Expr* term(void) {
+  Expr* expr = factor();
+
+  while (va_match(2, TOKEN_MINUS, TOKEN_PLUS)) {
+    Token operator = previous();
+    Expr* right = factor();
+    expr = newBinaryExpr(expr, operator, right);
+  }
+
+  return expr;
+}
+
+Expr* factor(void) {
+    Expr* expr = unary();
+
+    while (va_match(2, TOKEN_SLASH, TOKEN_STAR)) {
+      Token operator = previous();
+      Expr* right = unary();
+      expr = newBinaryExpr(expr, operator, right);
+    }
+
+    return expr;
+}
+
+Expr* unary(void) {
+    if (va_match(2, TOKEN_BANG, TOKEN_MINUS)) {
+      Token operator = previous();
+      Expr* right = unary();
+      return newUnaryExpr(operator, right);
+    }
+
+    return primary();
+}
+
+Expr* primary(void) {
+    if (tokenMatch(TOKEN_FALSE)) return newLiteralExpr((Literal){.type = LITERAL_BOOLEAN, .as.boolean = false});
+    if (tokenMatch(TOKEN_TRUE)) return newLiteralExpr((Literal){.type = LITERAL_BOOLEAN, .as.boolean = true});
+    if (tokenMatch(TOKEN_NIL)) return newLiteralExpr((Literal){.type = LITERAL_NONE});
+
+    if (va_match(2, TOKEN_NUMBER, TOKEN_STRING)) {
+      return newLiteralExpr(previous().literal);
+    }
+
+    if (tokenMatch(TOKEN_LEFT_PAREN)) {
+      Expr* expr = expression();
+      expect(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
+      return newGroupingExpr(expr);
+    }
+
+    // unreachable
+    return NULL;
+}
+
+// consume
+Token expect(TokenType type, const char* error_msg) {
+    if (check(type)) {
+        return tokenAdvance();
+    }
+
+    parserError(tokenPeek(), error_msg);
+
+    return tokenPeek(); // GEMINI: ARE YOU SURE WE WANT TO RETURN THE PREVIOUS TOKEN?
+}
+
+void parserError(Token token, const char* message) {
+    if (panicMode) return;
+
+    panicMode = 1;
+    hadError = 1;
+
+    if (token.type == TOKEN_EOF) {
+        fprintf(stderr, "[line %d] Error at end: %s\n", token.line, message);
+    } else {
+        fprintf(stderr, "[line %d] Error at '%s': %s\n", token.line, token.lexeme, message);
+    }
+}
+
+void synchronize(void) {
+    tokenAdvance();
+
+    while (!parserIsAtEnd()) {
+      if (previous().type == TOKEN_SEMICOLON) return;
+
+      switch (tokenPeek().type) {
+        case TOKEN_CLASS:
+        case TOKEN_FUN:
+        case TOKEN_VAR:
+        case TOKEN_FOR:
+        case TOKEN_IF:
+        case TOKEN_WHILE:
+        case TOKEN_PRINT:
+        case TOKEN_RETURN:
+          return;
+        default:
+            break;
+      }
+
+      tokenAdvance();
+    }
+}
+
 // END DEFINITIONS
