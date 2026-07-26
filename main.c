@@ -169,6 +169,7 @@ void* arena_alloc(Arena* arena, size_t size);
 char* arena_sprintf(Arena* arena, const char* fmt, ...);
 char* arena_substring(Arena* arena, const char* str, size_t start, size_t length);
 void initScanner(Scanner* scanner);
+void initParser(Parser* parser);
 bool isAtEnd(void);
 char* literalToString(Literal literal);
 char* tokenToString(Token token);
@@ -196,11 +197,11 @@ Expr* newLiteralExpr(Literal literal);
 Expr* newGroupingExpr(Expr* group);
 Token tokenPeek(void);
 bool parserIsAtEnd();
-bool check(TokenType type);
-Token previous(void);
+bool tokenCheck(TokenType type);
+Token tokenPrevious(void);
 Token tokenAdvance(void);
 bool tokenMatch(TokenType type);
-bool va_match(size_t count, ...);
+bool va_tokenMatch(size_t count, ...);
 Expr* expression(void);
 Expr* equality(void);
 Expr* comparison(void);
@@ -211,6 +212,7 @@ Expr* primary(void);
 Token expect(TokenType type, const char* error_msg);
 void parserError(Token token, const char* message);
 void synchronize(void);
+Expr* parse(void);
 
 // END FORWARD DECLARATIONS
 
@@ -237,6 +239,8 @@ int main(void) {
 
     size_t bytesRead = fread(content, sizeof(char), fileSize, file);
     initScanner(&scanner);
+    initParser(&parser);
+
     initArena(&stringArena, MEBIBYTE);
     initArena(&exprArena, MEBIBYTE);
 
@@ -379,6 +383,11 @@ void initScanner(Scanner* scanner) {
 	scanner->line = 1;
 	scanner->start = 0;
 	scanner->tokens.count = 0;
+}
+
+void initParser(Parser* parser) {
+	parser->current = 0;
+	parser->tokens.count = 0;
 }
 
 bool isAtEnd(void) {
@@ -570,9 +579,13 @@ void run(char* source) {
     size_t tokenCount = 0;
     scanTokens();
 
-    for (size_t i = 0; i < scanner.tokens.count; ++i) {
-        printf("%s\n", tokenToString(scanner.tokens.items[i]));
-    }
+    parser.tokens = scanner.tokens;
+    Expr* expression = parse();
+
+    // Stop if there was a syntax error.
+    if (hadError) return;
+
+    printAst(expression);
 }
 
 Expr* newUnaryExpr(Token operator, Expr* right) {
@@ -641,36 +654,36 @@ bool parserIsAtEnd() {
   return tokenPeek().type == TOKEN_EOF;
 }
 
-bool check(TokenType type) {
+bool tokenCheck(TokenType type) {
     if (parserIsAtEnd()) return false;
     return tokenPeek().type == type;
 }
 
-Token previous(void) {
+Token tokenPrevious(void) {
     return parser.tokens.items[parser.current - 1];
 }
 
 Token tokenAdvance(void) {
     if (!parserIsAtEnd()) parser.current++;
-    return previous();
+    return tokenPrevious();
 }
 
 bool tokenMatch(TokenType type) {
-    if (check(type)) {
+    if (tokenCheck(type)) {
         tokenAdvance();
         return true;
     }
     return false;
 }
 
-bool va_match(size_t count, ...) {
+bool va_tokenMatch(size_t count, ...) {
     va_list args;
     va_start(args, count);
 
     for (size_t i = 0; i < count; ++i) {
         TokenType type = va_arg(args, TokenType);
 
-        if (check(type)) {
+        if (tokenCheck(type)) {
             tokenAdvance();
             va_end(args);
             return true;
@@ -687,8 +700,8 @@ Expr* expression(void) {
 
 Expr* equality(void) {
     Expr* expr = comparison();
-    while (va_match(2, TOKEN_BANG_EQUAL, TOKEN_EQUAL_EQUAL)) {
-        Token operator = previous();
+    while (va_tokenMatch(2, TOKEN_BANG_EQUAL, TOKEN_EQUAL_EQUAL)) {
+        Token operator = tokenPrevious();
         Expr* right = comparison();
         expr = newBinaryExpr(expr, operator, right);
     }
@@ -697,8 +710,8 @@ Expr* equality(void) {
 
 Expr* comparison(void) {
   Expr* expr = term();
-  while (va_match(4, TOKEN_GREATER, TOKEN_GREATER_EQUAL, TOKEN_LESS, TOKEN_LESS_EQUAL)) {
-    Token operator = previous();
+  while (va_tokenMatch(4, TOKEN_GREATER, TOKEN_GREATER_EQUAL, TOKEN_LESS, TOKEN_LESS_EQUAL)) {
+    Token operator = tokenPrevious();
     Expr* right = term();
     expr = newBinaryExpr(expr, operator, right);
   }
@@ -709,8 +722,8 @@ Expr* comparison(void) {
 Expr* term(void) {
   Expr* expr = factor();
 
-  while (va_match(2, TOKEN_MINUS, TOKEN_PLUS)) {
-    Token operator = previous();
+  while (va_tokenMatch(2, TOKEN_MINUS, TOKEN_PLUS)) {
+    Token operator = tokenPrevious();
     Expr* right = factor();
     expr = newBinaryExpr(expr, operator, right);
   }
@@ -721,8 +734,8 @@ Expr* term(void) {
 Expr* factor(void) {
     Expr* expr = unary();
 
-    while (va_match(2, TOKEN_SLASH, TOKEN_STAR)) {
-      Token operator = previous();
+    while (va_tokenMatch(2, TOKEN_SLASH, TOKEN_STAR)) {
+      Token operator = tokenPrevious();
       Expr* right = unary();
       expr = newBinaryExpr(expr, operator, right);
     }
@@ -731,8 +744,8 @@ Expr* factor(void) {
 }
 
 Expr* unary(void) {
-    if (va_match(2, TOKEN_BANG, TOKEN_MINUS)) {
-      Token operator = previous();
+    if (va_tokenMatch(2, TOKEN_BANG, TOKEN_MINUS)) {
+      Token operator = tokenPrevious();
       Expr* right = unary();
       return newUnaryExpr(operator, right);
     }
@@ -745,8 +758,8 @@ Expr* primary(void) {
     if (tokenMatch(TOKEN_TRUE)) return newLiteralExpr((Literal){.type = LITERAL_BOOLEAN, .as.boolean = true});
     if (tokenMatch(TOKEN_NIL)) return newLiteralExpr((Literal){.type = LITERAL_NONE});
 
-    if (va_match(2, TOKEN_NUMBER, TOKEN_STRING)) {
-      return newLiteralExpr(previous().literal);
+    if (va_tokenMatch(2, TOKEN_NUMBER, TOKEN_STRING)) {
+      return newLiteralExpr(tokenPrevious().literal);
     }
 
     if (tokenMatch(TOKEN_LEFT_PAREN)) {
@@ -756,18 +769,19 @@ Expr* primary(void) {
     }
 
     // unreachable
+    parserError(tokenPeek(), "Expect expression.");
     return NULL;
 }
 
 // consume
 Token expect(TokenType type, const char* error_msg) {
-    if (check(type)) {
+    if (tokenCheck(type)) {
         return tokenAdvance();
     }
 
     parserError(tokenPeek(), error_msg);
 
-    return tokenPeek(); // GEMINI: ARE YOU SURE WE WANT TO RETURN THE PREVIOUS TOKEN?
+    return tokenPeek();
 }
 
 void parserError(Token token, const char* message) {
@@ -787,7 +801,7 @@ void synchronize(void) {
     tokenAdvance();
 
     while (!parserIsAtEnd()) {
-      if (previous().type == TOKEN_SEMICOLON) return;
+      if (tokenPrevious().type == TOKEN_SEMICOLON) return;
 
       switch (tokenPeek().type) {
         case TOKEN_CLASS:
@@ -807,4 +821,16 @@ void synchronize(void) {
     }
 }
 
+Expr* parse(void) {
+    hadError = 0;
+    panicMode = 0;
+
+    Expr* expr = expression();
+
+    if (hadError) {
+        return NULL;
+    }
+
+    return expr;
+}
 // END DEFINITIONS
