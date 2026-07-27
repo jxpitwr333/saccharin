@@ -92,7 +92,7 @@ typedef struct {
     LiteralType type;
     union {
         char* string;
-        float number;
+        double number;
         bool boolean;
     } as;
 } Literal;
@@ -159,6 +159,10 @@ struct Parser {
     int current;
 };
 
+struct Interpreter {
+
+};
+
 // END STRUCTS
 
 // FORWARD DECLARATIONS
@@ -213,6 +217,9 @@ Token expect(TokenType type, const char* error_msg);
 void parserError(Token token, const char* message);
 void synchronize(void);
 Expr* parse(void);
+bool isTruthy(Literal lit);
+bool isEqual(Literal litA, Literal litB);
+Literal evaluate(Expr* expr);
 
 // END FORWARD DECLARATIONS
 
@@ -510,7 +517,7 @@ void number(void) {
         while (isDigit(peek())) advance();
     }
 
-    addTokenWithLiteral(TOKEN_NUMBER, (Literal){.type = LITERAL_NUMBER, .as.number = strtof(arena_substring(&stringArena, scanner.source, scanner.start, scanner.current - scanner.start), NULL)});
+    addTokenWithLiteral(TOKEN_NUMBER, (Literal){.type = LITERAL_NUMBER, .as.number = strtod(arena_substring(&stringArena, scanner.source, scanner.start, scanner.current - scanner.start), NULL)});
 }
 
 void scanToken(void) {
@@ -586,6 +593,11 @@ void run(char* source) {
     if (hadError) return;
 
     printAst(expression);
+    puts("\n");
+    Literal result = evaluate(expression);
+    if (!hadError) {
+        printf("Result: %s\n", literalToString(result));
+    }
 }
 
 Expr* newUnaryExpr(Token operator, Expr* right) {
@@ -833,4 +845,117 @@ Expr* parse(void) {
 
     return expr;
 }
+
+bool isTruthy(Literal lit) {
+    if (lit.type == LITERAL_NONE) return false;
+    if (lit.type == LITERAL_BOOLEAN) return lit.as.boolean;
+    return true;
+}
+
+bool isEqual(Literal litA, Literal litB) {
+    if (litA.type != litB.type) return false;
+    switch(litA.type) {
+        case LITERAL_NONE: return true; /* this is horrible! */ break;
+        case LITERAL_BOOLEAN: return (litA.as.boolean != litB.as.boolean); break;
+        case LITERAL_NUMBER: return (litA.as.number != litB.as.number); break;
+        case LITERAL_STRING: return (bool)strcmp(litA.as.string, litB.as.string); break;
+        default: return false; break;
+    }
+    // unreachable
+    return false;
+}
+
+Literal evaluate(Expr* expr) {
+    if (!expr) return (Literal){ .type = LITERAL_NONE };
+
+    switch (expr->type) {
+        case EXPR_LITERAL:
+            return expr->as.literal;
+
+        case EXPR_GROUPING:
+            return evaluate(expr->as.grouping.expr);
+
+        case EXPR_UNARY: {
+            Literal right = evaluate(expr->as.unary.right);
+            TokenType op = expr->as.unary.operator.type;
+
+            if (op == TOKEN_MINUS) {
+                if (right.type != LITERAL_NUMBER) {
+                    error(expr->as.unary.operator.line, "Operand must be a number.");
+                    return (Literal){ .type = LITERAL_NONE };
+                }
+                return (Literal){ .type = LITERAL_NUMBER, .as.number = -right.as.number };
+            }
+            else if (op == TOKEN_BANG) {
+                return (Literal){ .type = LITERAL_BOOLEAN, .as.boolean = !isTruthy(right) };
+            }
+            break;
+        }
+
+        case EXPR_BINARY: {
+            Literal left = evaluate(expr->as.binary.left);
+            Literal right = evaluate(expr->as.binary.right);
+            TokenType op = expr->as.binary.operator.type;
+
+            switch (op) {
+                // Arithmetic
+                case TOKEN_MINUS:
+                    if (left.type != LITERAL_NUMBER || right.type != LITERAL_NUMBER) {
+                        error(expr->as.binary.operator.line, "Operands must be numbers.");
+                        return (Literal){ .type = LITERAL_NONE };
+                    }
+                    return (Literal){ .type = LITERAL_NUMBER, .as.number = left.as.number - right.as.number };
+
+                case TOKEN_STAR:
+                    if (left.type != LITERAL_NUMBER || right.type != LITERAL_NUMBER) {
+                        error(expr->as.binary.operator.line, "Operands must be numbers.");
+                        return (Literal){ .type = LITERAL_NONE };
+                    }
+                    return (Literal){ .type = LITERAL_NUMBER, .as.number = left.as.number * right.as.number };
+
+                case TOKEN_SLASH:
+                    if (left.type != LITERAL_NUMBER || right.type != LITERAL_NUMBER) {
+                        error(expr->as.binary.operator.line, "Operands must be numbers.");
+                        return (Literal){ .type = LITERAL_NONE };
+                    }
+                    return (Literal){ .type = LITERAL_NUMBER, .as.number = left.as.number / right.as.number };
+
+                case TOKEN_PLUS:
+                    // Number addition
+                    if (left.type == LITERAL_NUMBER && right.type == LITERAL_NUMBER) {
+                        return (Literal){ .type = LITERAL_NUMBER, .as.number = left.as.number + right.as.number };
+                    }
+                    // String concatenation
+                    if (left.type == LITERAL_STRING && right.type == LITERAL_STRING) {
+                        char* concat = arena_sprintf(&stringArena, "%s%s", left.as.string, right.as.string);
+                        return (Literal){ .type = LITERAL_STRING, .as.string = concat };
+                    }
+                    error(expr->as.binary.operator.line, "Operands must be two numbers or two strings.");
+                    return (Literal){ .type = LITERAL_NONE };
+
+                // Comparison operators
+                case TOKEN_GREATER:
+                    return (Literal){ .type = LITERAL_BOOLEAN, .as.boolean = left.as.number > right.as.number };
+                case TOKEN_GREATER_EQUAL:
+                    return (Literal){ .type = LITERAL_BOOLEAN, .as.boolean = left.as.number >= right.as.number };
+                case TOKEN_LESS:
+                    return (Literal){ .type = LITERAL_BOOLEAN, .as.boolean = left.as.number < right.as.number };
+                case TOKEN_LESS_EQUAL:
+                    return (Literal){ .type = LITERAL_BOOLEAN, .as.boolean = left.as.number <= right.as.number };
+
+                // Equality operators
+                case TOKEN_EQUAL_EQUAL:
+                    return (Literal){ .type = LITERAL_BOOLEAN, .as.boolean = isEqual(left, right) };
+                case TOKEN_BANG_EQUAL:
+                    return (Literal){ .type = LITERAL_BOOLEAN, .as.boolean = !isEqual(left, right) };
+
+                default: break;
+            }
+            break;
+        }
+    }
+
+    return (Literal){ .type = LITERAL_NONE };
+}
+
 // END DEFINITIONS
