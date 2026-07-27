@@ -925,9 +925,17 @@ Literal evaluate(Expr* expr) {
                     if (left.type == LITERAL_NUMBER && right.type == LITERAL_NUMBER) {
                         return (Literal){ .type = LITERAL_NUMBER, .as.number = left.as.number + right.as.number };
                     }
-                    // String concatenation
-                    if (left.type == LITERAL_STRING && right.type == LITERAL_STRING) {
-                        char* concat = arena_sprintf(&stringArena, "%s%s", left.as.string, right.as.string);
+                    // String concatenation (and concatenation of mismatch types)
+                    if (left.type == LITERAL_STRING || right.type == LITERAL_STRING) {
+                        char* strLeft = "";
+                        char* strRight = "";
+                        if (left.type != LITERAL_STRING) {
+                            strLeft = literalToString(left);
+                        } else strLeft = left.as.string;
+                        if (right.type != LITERAL_STRING) {
+                            strRight = literalToString(right);
+                        } else strRight = right.as.string;
+                        char* concat = arena_sprintf(&stringArena, "%s%s", strLeft, strRight);
                         return (Literal){ .type = LITERAL_STRING, .as.string = concat };
                     }
                     error(expr->as.binary.operator.line, "Operands must be two numbers or two strings.");
