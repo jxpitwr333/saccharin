@@ -1,1 +1,2 @@
-"scone" + 4
+print "scone" + 4;
+print 2 + 1;

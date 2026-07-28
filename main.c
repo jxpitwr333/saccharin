@@ -8,14 +8,17 @@
 typedef struct Scanner Scanner;
 typedef struct Parser Parser;
 typedef struct Arena Arena;
+typedef struct Program Program;
 
 // GLOBALS
 int hadError = 0;
 int panicMode = 0;
+Program program;
 Scanner scanner;
 Parser parser;
 Arena stringArena;
 Arena exprArena;
+Arena stmtArena;
 // END GLOBALS
 
 // MACROS
@@ -159,8 +162,27 @@ struct Parser {
     int current;
 };
 
-struct Interpreter {
+typedef enum {
+    STMT_EXPR,
+    STMT_PRINT,
+} StmtType;
 
+typedef struct {
+    StmtType type;
+    union {
+        Expr* expr;
+        Expr* print;
+    } as;
+} Stmt;
+
+typedef struct {
+    Stmt** items;
+    size_t count;
+    size_t capacity;
+} StmtList;
+
+struct Program {
+    StmtList statements;
 };
 
 // END STRUCTS
@@ -220,6 +242,13 @@ Expr* parse(void);
 bool isTruthy(Literal lit);
 bool isEqual(Literal litA, Literal litB);
 Literal evaluate(Expr* expr);
+void parseStatements(StmtList* statements);
+Stmt* newStmt(StmtType type, Expr* expr);
+Stmt* statement(void);
+Stmt* printStatement(void);
+Stmt* expressionStatement(void);
+void execute(Stmt* stmt);
+void interpret(StmtList* statements);
 
 // END FORWARD DECLARATIONS
 
@@ -250,6 +279,7 @@ int main(void) {
 
     initArena(&stringArena, MEBIBYTE);
     initArena(&exprArena, MEBIBYTE);
+    initArena(&stmtArena, MEBIBYTE);
 
     content[bytesRead] = '\0';
 
@@ -583,21 +613,24 @@ void scanTokens(void) {
 void run(char* source) {
     scanner.source = source;
 
-    size_t tokenCount = 0;
-    scanTokens();
-
+    hadError = 0;
+    panicMode = 0;
+    program.statements.count = 0;
+    program.statements.capacity = 0;
+    program.statements.items = NULL;
     parser.tokens = scanner.tokens;
-    Expr* expression = parse();
+
+    scanTokens();
 
     // Stop if there was a syntax error.
     if (hadError) return;
 
-    printAst(expression);
-    puts("\n");
-    Literal result = evaluate(expression);
-    if (!hadError) {
-        printf("Result: %s\n", literalToString(result));
-    }
+    parser.tokens = scanner.tokens;
+    parseStatements(&program.statements);
+
+    if (hadError) return;
+
+    interpret(&program.statements);
 }
 
 Expr* newUnaryExpr(Token operator, Expr* right) {
@@ -856,9 +889,9 @@ bool isEqual(Literal litA, Literal litB) {
     if (litA.type != litB.type) return false;
     switch(litA.type) {
         case LITERAL_NONE: return true; /* this is horrible! */ break;
-        case LITERAL_BOOLEAN: return (litA.as.boolean != litB.as.boolean); break;
-        case LITERAL_NUMBER: return (litA.as.number != litB.as.number); break;
-        case LITERAL_STRING: return (bool)strcmp(litA.as.string, litB.as.string); break;
+        case LITERAL_BOOLEAN: return (litA.as.boolean == litB.as.boolean); break;
+        case LITERAL_NUMBER: return (litA.as.number == litB.as.number); break;
+        case LITERAL_STRING: return (strcmp(litA.as.string, litB.as.string) == 0); break;
         default: return false; break;
     }
     // unreachable
@@ -964,6 +997,65 @@ Literal evaluate(Expr* expr) {
     }
 
     return (Literal){ .type = LITERAL_NONE };
+}
+
+void parseStatements(StmtList* statements) {
+    while (!parserIsAtEnd()) {
+        da_append(statements, statement());
+    }
+}
+
+Stmt* newStmt(StmtType type, Expr* expr) {
+    Stmt* stmt = arena_alloc(&stmtArena, sizeof(Stmt));
+    stmt->type = type;
+    if (type == STMT_EXPR) {
+        stmt ->as.expr = expr;
+    } else {
+        stmt ->as.print = expr;
+    }
+    return stmt;
+}
+
+Stmt* statement(void) {
+    if (tokenMatch(TOKEN_PRINT)) return printStatement();
+    return expressionStatement();
+}
+
+Stmt* printStatement(void) {
+    Expr* value = expression();
+    expect(TOKEN_SEMICOLON, "Expect ';' after value.");
+    return newStmt(STMT_PRINT, value);
+}
+
+Stmt* expressionStatement(void) {
+    Expr* value = expression();
+    expect(TOKEN_SEMICOLON, "Expect ';' after value.");
+    return newStmt(STMT_EXPR, value);
+}
+
+void execute(Stmt* stmt) {
+    switch (stmt->type) {
+        case STMT_EXPR:
+            evaluate(stmt->as.expr);
+            break;
+        case STMT_PRINT:
+            { /* Label followed by a declaration is a C23 extension. it took them 50+ years to fix this? lol */
+                Literal val = evaluate(stmt->as.expr);
+                printf("%s\n", literalToString(val));
+            }
+            break;
+    }
+}
+
+void interpret(StmtList* statements) {
+    if (!statements) return;
+
+    hadError = 0;
+
+    for (size_t i = 0; i < statements->count; ++i) {
+        execute(statements->items[i]);
+        if (hadError) return;
+    }
 }
 
 // END DEFINITIONS
