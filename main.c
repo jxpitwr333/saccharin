@@ -111,7 +111,8 @@ typedef enum {
 	EXPR_UNARY,
     EXPR_BINARY,
     EXPR_LITERAL,
-    EXPR_GROUPING
+    EXPR_GROUPING,
+    EXPR_VARIABLE
 } ExprType;
 
 typedef struct Expr Expr;
@@ -135,6 +136,10 @@ struct Expr {
             Token operator;
             Expr* right;
         } unary;
+
+        struct {
+            Token name;
+        } variable;
     } as;
 };
 
@@ -165,6 +170,7 @@ struct Parser {
 typedef enum {
     STMT_EXPR,
     STMT_PRINT,
+    STMT_VAR
 } StmtType;
 
 typedef struct {
@@ -172,6 +178,10 @@ typedef struct {
     union {
         Expr* expr;
         Expr* print;
+        struct {
+            Token name;
+            Expr* initializer;
+        } var;
     } as;
 } Stmt;
 
@@ -194,6 +204,7 @@ void arenaReset(Arena* arena);
 void* arena_alloc(Arena* arena, size_t size);
 char* arena_sprintf(Arena* arena, const char* fmt, ...);
 char* arena_substring(Arena* arena, const char* str, size_t start, size_t length);
+
 void initScanner(Scanner* scanner);
 void initParser(Parser* parser);
 bool isAtEnd(void);
@@ -221,6 +232,7 @@ Expr* newUnaryExpr(Token operator, Expr* right);
 Expr* newBinaryExpr(Expr* left, Token operator, Expr* right);
 Expr* newLiteralExpr(Literal literal);
 Expr* newGroupingExpr(Expr* group);
+Expr* newExprVar(Token token);
 Token tokenPeek(void);
 bool parserIsAtEnd();
 bool tokenCheck(TokenType type);
@@ -243,7 +255,9 @@ bool isTruthy(Literal lit);
 bool isEqual(Literal litA, Literal litB);
 Literal evaluate(Expr* expr);
 void parseStatements(StmtList* statements);
-Stmt* newStmt(StmtType type, Expr* expr);
+Stmt* declaration();
+Stmt* varDeclaration();
+Stmt* newStmt(StmtType type, Expr* expr, Token name);
 Stmt* statement(void);
 Stmt* printStatement(void);
 Stmt* expressionStatement(void);
@@ -664,6 +678,13 @@ Expr* newGroupingExpr(Expr* group) {
     return expr;
 }
 
+Expr* newExprVar(Token name) {
+    Expr* expr = arena_alloc(&exprArena, sizeof(Expr));
+    expr->type = EXPR_VARIABLE;
+    expr->as.variable.name = name;
+    return expr;
+}
+
 void printAst(Expr* expr) {
     if (!expr) return;
 
@@ -805,6 +826,10 @@ Expr* primary(void) {
 
     if (va_tokenMatch(2, TOKEN_NUMBER, TOKEN_STRING)) {
       return newLiteralExpr(tokenPrevious().literal);
+    }
+
+    if (tokenMatch(TOKEN_IDENTIFIER)) {
+        return newExprVar(tokenPrevious());
     }
 
     if (tokenMatch(TOKEN_LEFT_PAREN)) {
@@ -1001,17 +1026,40 @@ Literal evaluate(Expr* expr) {
 
 void parseStatements(StmtList* statements) {
     while (!parserIsAtEnd()) {
-        da_append(statements, statement());
+        da_append(statements, declaration());
     }
 }
 
-Stmt* newStmt(StmtType type, Expr* expr) {
+Stmt* declaration() {
+    if (tokenMatch(TOKEN_VAR)) return varDeclaration();
+    return statement();
+
+    if (panicMode) { /* BUT WHO SETS PANIC MODE? */
+        synchronize();
+        return NULL;
+    }
+}
+
+Stmt* varDeclaration() {
+    Token name = expect(TOKEN_IDENTIFIER, "Expect variable name.");
+
+    Expr* initializer = NULL;
+    if (tokenMatch(TOKEN_EQUAL)) initializer = expression();
+
+    expect(TOKEN_SEMICOLON, "Expect ';' after variable declaration");
+    return newStmt(STMT_VAR, initializer, name);
+}
+
+Stmt* newStmt(StmtType type, Expr* expr, Token name) {
     Stmt* stmt = arena_alloc(&stmtArena, sizeof(Stmt));
     stmt->type = type;
-    if (type == STMT_EXPR) {
-        stmt ->as.expr = expr;
-    } else {
-        stmt ->as.print = expr;
+    switch (type) {
+        case STMT_EXPR: stmt->as.expr = expr; break;
+        case STMT_PRINT: stmt->as.print = expr; break;
+        case STMT_VAR:
+            stmt->as.var.initializer = expr;
+            stmt->as.var.name = name;
+        break;
     }
     return stmt;
 }
@@ -1024,13 +1072,13 @@ Stmt* statement(void) {
 Stmt* printStatement(void) {
     Expr* value = expression();
     expect(TOKEN_SEMICOLON, "Expect ';' after value.");
-    return newStmt(STMT_PRINT, value);
+    return newStmt(STMT_PRINT, value, (Token){});
 }
 
 Stmt* expressionStatement(void) {
     Expr* value = expression();
     expect(TOKEN_SEMICOLON, "Expect ';' after value.");
-    return newStmt(STMT_EXPR, value);
+    return newStmt(STMT_EXPR, value, (Token){});
 }
 
 void execute(Stmt* stmt) {
