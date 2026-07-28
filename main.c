@@ -1,14 +1,17 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 typedef struct Scanner Scanner;
 typedef struct Parser Parser;
 typedef struct Arena Arena;
 typedef struct Program Program;
+typedef struct Hashtable Hashtable;
 
 // GLOBALS
 int hadError = 0;
@@ -19,6 +22,7 @@ Parser parser;
 Arena stringArena;
 Arena exprArena;
 Arena stmtArena;
+Hashtable envMap;
 // END GLOBALS
 
 // MACROS
@@ -101,6 +105,17 @@ typedef struct {
 } Literal;
 
 typedef struct {
+    char* key;
+    Literal value;
+} Entry;
+
+struct Hashtable {
+    Entry* entries;
+    size_t count;
+    size_t capacity;
+};
+
+typedef struct {
     Literal literal;
     char* lexeme;
     TokenType type;
@@ -112,7 +127,8 @@ typedef enum {
     EXPR_BINARY,
     EXPR_LITERAL,
     EXPR_GROUPING,
-    EXPR_VARIABLE
+    EXPR_VARIABLE,
+    EXPR_ASSIGN
 } ExprType;
 
 typedef struct Expr Expr;
@@ -140,6 +156,11 @@ struct Expr {
         struct {
             Token name;
         } variable;
+
+        struct {
+            Token name;
+            Expr* value;
+        } assign;
     } as;
 };
 
@@ -204,14 +225,22 @@ void arenaReset(Arena* arena);
 void* arena_alloc(Arena* arena, size_t size);
 char* arena_sprintf(Arena* arena, const char* fmt, ...);
 char* arena_substring(Arena* arena, const char* str, size_t start, size_t length);
-
+void initTable(Hashtable* table);
+uint32_t hashString(char* key);
+Entry* findEntry(Entry* entries, int capacity, char* key);
+void adjustCapacity(Hashtable* table, size_t capacity);
+Literal* tableGet(Hashtable* table, char* key);
+bool tableAdd(Hashtable* table, char* key, Literal value);
+void freeTable(Hashtable* table);
+void envDefine(Token name, Literal value);
+Literal getVariable(Token name);
 void initScanner(Scanner* scanner);
 void initParser(Parser* parser);
 bool isAtEnd(void);
 char* literalToString(Literal literal);
 char* tokenToString(Token token);
-static void report(int line, char* where, char* message);
-static void error(int line, char* message);
+void report(int line, char* where, char* message);
+void error(int line, char* message);
 char advance(void);
 bool match(char expected);
 char peek(void);
@@ -233,6 +262,7 @@ Expr* newBinaryExpr(Expr* left, Token operator, Expr* right);
 Expr* newLiteralExpr(Literal literal);
 Expr* newGroupingExpr(Expr* group);
 Expr* newExprVar(Token token);
+Expr* newExprAssign(Token name, Expr* value);
 Token tokenPeek(void);
 bool parserIsAtEnd();
 bool tokenCheck(TokenType type);
@@ -241,6 +271,7 @@ Token tokenAdvance(void);
 bool tokenMatch(TokenType type);
 bool va_tokenMatch(size_t count, ...);
 Expr* expression(void);
+Expr* assignment(void);
 Expr* equality(void);
 Expr* comparison(void);
 Expr* term(void);
@@ -429,6 +460,91 @@ char* arena_substring(Arena* arena, const char* str, size_t start, size_t length
     return sub;
 }
 
+void initTable(Hashtable* table) {
+    table->entries = NULL;
+    table->count = 0;
+    table->capacity = 0;
+}
+
+uint32_t hashString(char* key) {
+    size_t length = strlen(key);
+    uint32_t hash = 2166136261u;
+    for (int i = 0; i < length; i++) {
+        hash ^= (uint8_t)key[i];
+        hash *= 16777619;
+    }
+    return hash;
+}
+
+Entry* findEntry(Entry* entries, int capacity, char* key) {
+  uint32_t index = hashString(key) % capacity;
+  for (;;) {
+    Entry* entry = &entries[index];
+    if (entry->key == NULL || strcmp(entry->key, key) == 0) {
+      return entry;
+    }
+
+    index = (index + 1) % capacity;
+  }
+}
+
+Literal* tableGet(Hashtable* table, char* key) {
+  if (table->count == 0) return NULL;
+
+  Entry* entry = findEntry(table->entries, table->capacity, key);
+  if (entry->key == NULL) return NULL;
+
+  return &entry->value;
+}
+
+void adjustCapacity(Hashtable* table, size_t capacity) {
+    Entry* entries = (Entry*)calloc(capacity, sizeof(Entry));
+
+    table->count = 0;
+    for (size_t i = 0; i < table->capacity; i++) {
+        Entry* source = &table->entries[i];
+        if (source->key == NULL) continue;
+
+        Entry* dest = findEntry(entries, capacity, source->key);
+        dest->key = source->key;
+        dest->value = source->value;
+        table->count++;
+    }
+
+    free(table->entries);
+    table->entries = entries;
+    table->capacity = capacity;
+}
+
+bool tableAdd(Hashtable* table, char* key, Literal value) {
+    if (table->count + 1 > table->capacity * 0.75f) {
+        size_t newCapacity = table->capacity < 256 ? 256 : table->capacity * 2;
+        adjustCapacity(table, newCapacity);
+      }
+
+    Entry* entry = findEntry(table->entries, table->capacity, key);
+    bool isNewKey = entry->key == NULL;
+    if (isNewKey) table->count++;
+
+    entry->key = key;
+    entry->value = value;
+    return isNewKey;
+}
+
+void freeTable(Hashtable* table) {
+    free(table->entries);
+}
+
+void envDefine(Token name, Literal value) {
+    tableAdd(&envMap, name.lexeme, value);
+}
+
+Literal getVariable(Token name) {
+    Literal* val = tableGet(&envMap, name.lexeme);
+    if (val) return *val;
+    else return (Literal){.type = LITERAL_NONE};
+}
+
 void initScanner(Scanner* scanner) {
 	scanner->current = 0;
 	scanner->line = 1;
@@ -464,12 +580,12 @@ char* tokenToString(Token token) {
     return arena_sprintf(&stringArena, "%s %s %s", TOKEN_TYPE_NAMES[token.type], token.lexeme, literalToString(token.literal));
 }
 
-static void report(int line, char* where, char* message) {
+void report(int line, char* where, char* message) {
     fprintf(stderr, "[line %d] Error %s: %s\n", line, where, message);
     hadError = 1;
 }
 
-static void error(int line, char* message) {
+void error(int line, char* message) {
     report(line, "", message);
 }
 
@@ -685,6 +801,14 @@ Expr* newExprVar(Token name) {
     return expr;
 }
 
+Expr* newExprAssign(Token name, Expr* value) {
+    Expr* expr = arena_alloc(&exprArena, sizeof(Expr));
+    expr->type = EXPR_ASSIGN;
+    expr->as.assign.name = name;
+    expr->as.assign.value = value;
+    return expr;
+}
+
 void printAst(Expr* expr) {
     if (!expr) return;
 
@@ -708,6 +832,13 @@ void printAst(Expr* expr) {
             printf("(group ");
             printAst(expr->as.grouping.expr);
             printf(")");
+            break;
+        case EXPR_VARIABLE:
+            printf("%s = %s", expr->as.variable.name.lexeme ,literalToString(expr->as.variable.name.literal));
+            break;
+        case EXPR_ASSIGN:
+            printf("%s", expr->as.assign.name.lexeme);
+            printAst(expr->as.assign.value);
             break;
     }
 }
@@ -761,7 +892,25 @@ bool va_tokenMatch(size_t count, ...) {
 }
 
 Expr* expression(void) {
-    return equality();
+    return assignment();
+}
+
+Expr* assignment(void) {
+    Expr* expr = equality();
+
+    if (tokenMatch(TOKEN_EQUAL)) {
+        Token equals = tokenPrevious();
+        Expr* value = assignment();
+
+        if (expr->type == EXPR_VARIABLE) {
+            Token name = expr->as.variable.name;
+            return newExprAssign(name, value);
+        }
+
+        error(equals.line, "Invalid assignment target.");
+    }
+
+    return expr;
 }
 
 Expr* equality(void) {
@@ -927,6 +1076,14 @@ Literal evaluate(Expr* expr) {
     if (!expr) return (Literal){ .type = LITERAL_NONE };
 
     switch (expr->type) {
+        case EXPR_ASSIGN: {
+            Literal value = evaluate(expr->as.assign.value);
+            envDefine(expr->as.assign.name, value); /* assignment uses the same function as definition because tableAdd handles the "if key exists, replace value" case */
+            return value;
+        }
+        case EXPR_VARIABLE:
+            return getVariable(expr->as.variable.name);
+
         case EXPR_LITERAL:
             return expr->as.literal;
 
@@ -1090,6 +1247,16 @@ void execute(Stmt* stmt) {
             { /* Label followed by a declaration is a C23 extension. it took them 50+ years to fix this? lol */
                 Literal val = evaluate(stmt->as.expr);
                 printf("%s\n", literalToString(val));
+            }
+            break;
+        case STMT_VAR:
+            {
+                Literal value;
+                if (stmt->as.var.initializer != NULL) {
+                    value = evaluate(stmt->as.var.initializer);
+                }
+
+                envDefine(stmt->as.var.name, value);
             }
             break;
     }

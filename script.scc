@@ -1,2 +1,4 @@
-print "scone" + 4;
-print 2 + 1;
+var a = 1;
+var b = 2;
+b = 3;
+print a + b;
