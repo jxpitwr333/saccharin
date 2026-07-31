@@ -12,6 +12,7 @@ typedef struct Parser Parser;
 typedef struct Arena Arena;
 typedef struct Program Program;
 typedef struct Hashtable Hashtable;
+typedef struct Environment Environment;
 
 // GLOBALS
 int hadError = 0;
@@ -22,7 +23,7 @@ Parser parser;
 Arena stringArena;
 Arena exprArena;
 Arena stmtArena;
-Hashtable envMap;
+Environment environment;
 // END GLOBALS
 
 // MACROS
@@ -113,6 +114,11 @@ struct Hashtable {
     Entry* entries;
     size_t count;
     size_t capacity;
+};
+
+struct Environment {
+    Hashtable values;
+    Environment* enclosing;
 };
 
 typedef struct {
@@ -325,13 +331,16 @@ int main(void) {
     initArena(&stringArena, MEBIBYTE);
     initArena(&exprArena, MEBIBYTE);
     initArena(&stmtArena, MEBIBYTE);
+    initTable(&environment.values);
 
     content[bytesRead] = '\0';
 
 	run(content);
 
 	free(scanner.tokens.items);
+	freeTable(&environment.values);
 	freeArena(&stringArena);
+	freeArena(&stmtArena);
 	freeArena(&exprArena);
     free(content);
     fclose(file);
@@ -536,13 +545,17 @@ void freeTable(Hashtable* table) {
 }
 
 void envDefine(Token name, Literal value) {
-    tableAdd(&envMap, name.lexeme, value);
+    tableAdd(&environment.values, name.lexeme, value);
 }
 
 Literal getVariable(Token name) {
-    Literal* val = tableGet(&envMap, name.lexeme);
+    Literal* val = tableGet(&environment.values, name.lexeme);
     if (val) return *val;
     else return (Literal){.type = LITERAL_NONE};
+}
+
+void initEnvironment(Environment* env) {
+    env->enclosing = NULL;
 }
 
 void initScanner(Scanner* scanner) {
