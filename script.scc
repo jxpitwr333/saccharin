@@ -1,9 +1,1 @@
-var a = 1;
-var b = 2;
-b = 3;
-print a + b;
-print "hello";
-var skibidi = "string";
-print skibidi;
-skibidi = skibidi + 1;
-print skibidi;
+1 + 1; 2 + 2;
