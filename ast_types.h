@@ -1,0 +1,49 @@
+#ifndef AST_TYPES_H
+#define AST_TYPES_H
+
+typedef struct Parser Parser;
+typedef struct Expr Expr;
+typedef struct Token Token;
+
+typedef enum {
+	EXPR_BINARY,
+	EXPR_UNARY,
+	EXPR_NUMBER,
+	EXPR_BLOCK,
+	EXPR_CONDITIONAL
+} ExprKind;
+
+typedef enum {
+	TOKEN_NONE,
+	TOKEN_LEFT_PAREN,
+	TOKEN_RIGHT_PAREN,
+	TOKEN_PLUS,
+	TOKEN_MINUS,
+	TOKEN_STAR,
+	TOKEN_SLASH,
+	TOKEN_SEMICOLON,
+	TOKEN_NUMBER_LITERAL,
+	TOKEN_EQUAL, // =
+	TOKEN_EQUAL_EQUAL, // ==
+	TOKEN_BANG,
+	TOKEN_BANG_EQUAL, // !=
+	TOKEN_GREATER, // >
+	TOKEN_LESS, // <
+	TOKEN_GREATER_EQUAL, // >=
+	TOKEN_LESS_EQUAL, // <=
+	TOKEN_IDENTIFIER,
+	TOKEN_IF,
+	TOKEN_ELSE,
+	TOKEN_ELSEIF,
+	TOKEN_AND,
+	TOKEN_OR,
+    TOKEN_TRUE,
+    TOKEN_FALSE,
+    TOKEN_FOR,
+    TOKEN_FUN,
+    TOKEN_RETURN,
+    TOKEN_WHILE,
+	TOKEN_EOF
+} TokenKind;
+
+#endif

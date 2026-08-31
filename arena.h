@@ -1,7 +1,9 @@
 #ifndef ARENA_H
 #define ARENA_H
 
-#include <stddef.h>
+#ifndef UNITY_BUILD
+    #include <stddef.h>
+#endif
 
 typedef struct {
 	unsigned char* data;
@@ -17,8 +19,10 @@ void arenaFree(Arena* a);
 
 #ifdef ARENA_IMPL
 
-#include <stdlib.h>
-#include <stdio.h>
+#ifndef UNITY_BUILD
+    #include <stdlib.h>
+    #include <stdio.h>
+#endif
 
 Arena arenaInit(size_t capacity) {
 	Arena a ={

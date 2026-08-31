@@ -1,0 +1,11 @@
+{
+  "lsp": {
+    "clangd": {
+      "initialization_options": {
+        "fallbackFlags": [
+          "-w"
+        ]
+      }
+    }
+  }
+}

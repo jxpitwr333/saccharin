@@ -1,7 +1,9 @@
 #ifndef FILE_H
 #define FILE_H
 
-#include <stddef.h>
+#ifndef UNITY_BUILD
+    #include <stddef.h>
+#endif
 
 char* readFileBinary(char* fileName, size_t* fileSizeOut);
 
@@ -9,8 +11,10 @@ char* readFileBinary(char* fileName, size_t* fileSizeOut);
 
 #ifdef FILE_IMPL
 
-#include <stdio.h>
-#include <stdlib.h>
+#ifndef UNITY_BUILD
+    #include <stdio.h>
+    #include <stdlib.h>
+#endif
 
 char* readFileBinary(char* fileName, size_t* fileSizeOut) {
     if (fileSizeOut) *fileSizeOut = 0;

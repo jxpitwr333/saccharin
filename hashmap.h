@@ -2,9 +2,11 @@
 #ifndef HASHMAP_H
 #define HASHMAP_H
 
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
+#ifndef UNITY_BUILD
+    #include <stdint.h>
+    #include <stddef.h>
+    #include <stdbool.h>
+#endif
 
 #define TABLE_MAX_LOAD 0.75
 
@@ -47,8 +49,10 @@ bool tableDelete(Table* table, const char* key);
 
 #ifdef HASH_IMPL
 
-#include <stdlib.h>
-#include <string.h>
+#ifndef UNITY_BUILD
+    #include <stdlib.h>
+    #include <string.h>
+#endif
 
 static uint32_t hashString(const char* key, size_t length) {
     uint32_t hash = 2166136261u;
@@ -109,8 +113,18 @@ void initTable(Table* table) {
 }
 
 void freeTable(Table* table) {
+    for (size_t i = 0; i < table->count; ++i) {
+        if (table->entries[i].key) free(table->entries[i].key);
+    }
     free(table->entries);
     initTable(table);
+}
+
+static char* my_strdup(const char* source) {\
+    size_t len = strlen(source) + 1;
+    char *dest = malloc(len);
+    if (dest) strcpy(dest, source);
+    return dest;
 }
 
 bool tableSet(Table* table, const char* key, Value value) {
@@ -121,11 +135,11 @@ bool tableSet(Table* table, const char* key, Value value) {
 
     Entry* entry = findEntry(table->entries, table->capacity, key);
     bool isNewKey = entry->key == NULL;
-    
+
     if (isNewKey && entry->value.kind == VALUE_NIL) table->count++;
 
     if (isNewKey) {
-        entry->key = strdup(key);
+        entry->key = my_strdup(key);
     }
 
     entry->value = value;

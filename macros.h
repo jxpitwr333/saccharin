@@ -1,6 +1,10 @@
 #ifndef MACROS_H
 #define MACROS_H
 
+#ifndef UNITY_BUILD
+    #include <stdlib.h>
+#endif
+
 #define MB * 1048576ULL
 
 #define da_append(xs, x) do {\
