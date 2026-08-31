@@ -216,7 +216,7 @@ makeBinary	expr.c	/^Expr* makeBinary(Parser* p, Expr* left, Expr* right, TokenKi
 makeNumber	expr.c	/^Expr* makeNumber(Parser* p, int64_t value) {$/;"	f	typeref:typename:Expr *
 makeUnary	expr.c	/^Expr* makeUnary(Parser* p, Expr* right, TokenKind operator) {$/;"	f	typeref:typename:Expr *
 match	token.c	/^bool match(Lexer* l, char expected) {$/;"	f	typeref:typename:bool
-my_strdup	hashmap.h	/^static char* my_strdup(char* source) {\\$/;"	f	typeref:typename:char *
+my_strdup	hashmap.h	/^static char* my_strdup(const char* source) {\\$/;"	f	typeref:typename:char *
 number	expr.h	/^		int64_t number;$/;"	m	union:Expr::__anonfc32de7a010a	typeref:typename:int64_t
 offset	arena.h	/^	size_t offset;$/;"	m	struct:__anon3fde59c20108	typeref:typename:size_t
 op	expr.h	/^			TokenKind op;$/;"	m	struct:Expr::__anonfc32de7a010a::__anonfc32de7a0208	typeref:typename:TokenKind
