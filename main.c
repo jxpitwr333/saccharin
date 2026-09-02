@@ -60,6 +60,8 @@ int main(void) {
 		switch(c) {
 			case '(': addToken(&lex, TOKEN_LEFT_PAREN); break;
 			case ')': addToken(&lex, TOKEN_RIGHT_PAREN); break;
+            case '{': addToken(&lex, TOKEN_LEFT_BRACE); break;
+			case '}': addToken(&lex, TOKEN_RIGHT_BRACE); break;
 			case '+': addToken(&lex, TOKEN_PLUS); break;
 			case '-': addToken(&lex, TOKEN_MINUS); break;
 			case '*': addToken(&lex, TOKEN_STAR); break;
@@ -124,8 +126,11 @@ int main(void) {
 			tokAdvance(&parser);
 		}
 
+        printf("--- AST ---\n");
 		printAst(ast);
-		printf(" = %lld\n", (long long)eval(ast));
+        printf("\n--- EVAL ---\n");
+		int64_t result = (long long)eval(ast);
+        printf("block result = %lld", (long long)result);
 	}
 
 	free(lex.tokens.items);

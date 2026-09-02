@@ -15,4 +15,13 @@
 	(xs)->items[(xs)->count++] = (x);\
 } while(0)
 
+#define da_free(xs) do {\
+    if ((xs)-> items) {\
+        free((xs)->items);\
+        (xs)->items = NULL;\
+        (xs)->capacity = 0;\
+        (xs)->count = 0;\
+    }\
+} while(0)
+
 #endif

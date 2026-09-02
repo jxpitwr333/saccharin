@@ -22,6 +22,7 @@ bool parserIsAtEnd(Parser* p);
 Token tokAdvance(Parser* p);
 Token tokPeek(Parser* p);
 Token tokPeekNext(Parser* p);
+void tokConsume(Parser* p, TokenKind t, char c);
 void printAst(Expr* e);
 int64_t eval(Expr* e);
 

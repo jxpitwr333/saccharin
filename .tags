@@ -90,6 +90,7 @@ Entry	hashmap.h	/^} Entry;$/;"	t	typeref:struct:__anon58896add0408
 Expr	ast_types.h	/^typedef struct Expr Expr;$/;"	t	typeref:struct:Expr
 Expr	expr.h	/^struct Expr {$/;"	s
 ExprKind	ast_types.h	/^} ExprKind;$/;"	t	typeref:enum:__anonbce2a1170103
+ExprList	expr.h	/^} ExprList;$/;"	t	typeref:struct:__anonfc32de7a0608
 FILE_H	file.h	/^#define FILE_H$/;"	d
 FILE_IMPL	main.c	/^#define FILE_IMPL$/;"	d	file:
 HASHMAP_H	hashmap.h	/^#define HASHMAP_H$/;"	d
@@ -120,6 +121,7 @@ TOKEN_GREATER_EQUAL	ast_types.h	/^	TOKEN_GREATER_EQUAL, \/\/ >=$/;"	e	enum:__ano
 TOKEN_H	token.h	/^#define TOKEN_H$/;"	d
 TOKEN_IDENTIFIER	ast_types.h	/^	TOKEN_IDENTIFIER,$/;"	e	enum:__anonbce2a1170203
 TOKEN_IF	ast_types.h	/^	TOKEN_IF,$/;"	e	enum:__anonbce2a1170203
+TOKEN_LEFT_BRACE	ast_types.h	/^    TOKEN_LEFT_BRACE,$/;"	e	enum:__anonbce2a1170203
 TOKEN_LEFT_PAREN	ast_types.h	/^	TOKEN_LEFT_PAREN,$/;"	e	enum:__anonbce2a1170203
 TOKEN_LESS	ast_types.h	/^	TOKEN_LESS, \/\/ <$/;"	e	enum:__anonbce2a1170203
 TOKEN_LESS_EQUAL	ast_types.h	/^	TOKEN_LESS_EQUAL, \/\/ <=$/;"	e	enum:__anonbce2a1170203
@@ -129,6 +131,7 @@ TOKEN_NUMBER_LITERAL	ast_types.h	/^	TOKEN_NUMBER_LITERAL,$/;"	e	enum:__anonbce2a
 TOKEN_OR	ast_types.h	/^	TOKEN_OR,$/;"	e	enum:__anonbce2a1170203
 TOKEN_PLUS	ast_types.h	/^	TOKEN_PLUS,$/;"	e	enum:__anonbce2a1170203
 TOKEN_RETURN	ast_types.h	/^    TOKEN_RETURN,$/;"	e	enum:__anonbce2a1170203
+TOKEN_RIGHT_BRACE	ast_types.h	/^    TOKEN_RIGHT_BRACE,$/;"	e	enum:__anonbce2a1170203
 TOKEN_RIGHT_PAREN	ast_types.h	/^	TOKEN_RIGHT_PAREN,$/;"	e	enum:__anonbce2a1170203
 TOKEN_SEMICOLON	ast_types.h	/^	TOKEN_SEMICOLON,$/;"	e	enum:__anonbce2a1170203
 TOKEN_SLASH	ast_types.h	/^	TOKEN_SLASH,$/;"	e	enum:__anonbce2a1170203
@@ -160,6 +163,7 @@ __anonfc32de7a0208	expr.h	/^		struct {$/;"	s	union:Expr::__anonfc32de7a010a
 __anonfc32de7a0308	expr.h	/^		struct {$/;"	s	union:Expr::__anonfc32de7a010a
 __anonfc32de7a0408	expr.h	/^		struct {$/;"	s	union:Expr::__anonfc32de7a010a
 __anonfc32de7a0508	expr.h	/^		struct {$/;"	s	union:Expr::__anonfc32de7a010a
+__anonfc32de7a0608	expr.h	/^typedef struct {$/;"	s
 addToken	token.c	/^void addToken(Lexer* l, TokenKind kind) {$/;"	f	typeref:typename:void
 adjustCapacity	hashmap.h	/^static void adjustCapacity(Table* table, size_t capacity) {$/;"	f	typeref:typename:void
 advance	token.c	/^char advance(Lexer* l) {$/;"	f	typeref:typename:char
@@ -173,21 +177,25 @@ astArena	parser.h	/^	Arena astArena;$/;"	m	struct:Parser	typeref:typename:Arena
 binary	expr.h	/^		} binary;$/;"	m	union:Expr::__anonfc32de7a010a	typeref:struct:Expr::__anonfc32de7a010a::__anonfc32de7a0208
 block	expr.h	/^		} block;$/;"	m	union:Expr::__anonfc32de7a010a	typeref:struct:Expr::__anonfc32de7a010a::__anonfc32de7a0408
 capacity	arena.h	/^	size_t capacity;$/;"	m	struct:__anon3fde59c20108	typeref:typename:size_t
+capacity	expr.h	/^    size_t capacity;$/;"	m	struct:__anonfc32de7a0608	typeref:typename:size_t
 capacity	hashmap.h	/^    size_t capacity;$/;"	m	struct:__anon58896add0508	typeref:typename:size_t
 capacity	token.h	/^	size_t capacity;$/;"	m	struct:__anonefd93d1c0108	typeref:typename:size_t
 clangd	.zed/settings.json	/^    "clangd": {$/;"	o	object:lsp
 clean	Makefile	/^clean:$/;"	t
 conditional	expr.h	/^		} conditional;$/;"	m	union:Expr::__anonfc32de7a010a	typeref:struct:Expr::__anonfc32de7a010a::__anonfc32de7a0508
 count	expr.h	/^			size_t count;$/;"	m	struct:Expr::__anonfc32de7a010a::__anonfc32de7a0408	typeref:typename:size_t
+count	expr.h	/^    size_t count;$/;"	m	struct:__anonfc32de7a0608	typeref:typename:size_t
 count	hashmap.h	/^    size_t count;$/;"	m	struct:__anon58896add0508	typeref:typename:size_t
 count	token.h	/^	size_t count;$/;"	m	struct:__anonefd93d1c0108	typeref:typename:size_t
 current	parser.h	/^	size_t current;$/;"	m	struct:Parser	typeref:typename:size_t
 current	token.h	/^	size_t current;$/;"	m	struct:__anonefd93d1c0208	typeref:typename:size_t
 da_append	macros.h	/^#define da_append(/;"	d
+da_free	macros.h	/^#define da_free(/;"	d
 data	arena.h	/^	unsigned char* data;$/;"	m	struct:__anon3fde59c20108	typeref:typename:unsigned char *
 elseBranch	expr.h	/^			Expr* elseBranch;$/;"	m	struct:Expr::__anonfc32de7a010a::__anonfc32de7a0508	typeref:typename:Expr *
 entries	hashmap.h	/^    Entry* entries;$/;"	m	struct:__anon58896add0508	typeref:typename:Entry *
 eval	parser.c	/^int64_t eval(Expr* e) {$/;"	f	typeref:typename:int64_t
+exprAlloc	expr.c	/^static inline Expr* exprAlloc(Parser* p) {$/;"	f	typeref:typename:Expr *	file:
 expression	expr.h	/^		    Expr* expression;$/;"	m	struct:Expr::__anonfc32de7a010a::__anonfc32de7a0508	typeref:typename:Expr *
 expressions	expr.h	/^		    Expr** expressions;$/;"	m	struct:Expr::__anonfc32de7a010a::__anonfc32de7a0408	typeref:typename:Expr **
 fallbackFlags	.zed/settings.json	/^        "fallbackFlags": [$/;"	a	object:lsp.clangd.initialization_options
@@ -199,6 +207,7 @@ initTable	hashmap.h	/^void initTable(Table* table) {$/;"	f	typeref:typename:void
 initialization_options	.zed/settings.json	/^      "initialization_options": {$/;"	o	object:lsp.clangd
 integer	hashmap.h	/^        int64_t integer;$/;"	m	union:__anon58896add0208::__anon58896add030a	typeref:typename:int64_t
 isAtEnd	token.c	/^bool isAtEnd(Lexer* l) {$/;"	f	typeref:typename:bool
+items	expr.h	/^    Expr** items;$/;"	m	struct:__anonfc32de7a0608	typeref:typename:Expr **
 items	token.h	/^	Token* items;$/;"	m	struct:__anonefd93d1c0108	typeref:typename:Token *
 key	hashmap.h	/^    char* key;$/;"	m	struct:__anon58896add0408	typeref:typename:char *
 keywords	main.c	/^Table keywords;$/;"	v	typeref:typename:Table
@@ -213,6 +222,7 @@ line	token.h	/^	size_t line;$/;"	m	struct:__anonefd93d1c0208	typeref:typename:si
 lsp	.zed/settings.json	/^  "lsp": {$/;"	o
 main	main.c	/^int main(void) {$/;"	f	typeref:typename:int
 makeBinary	expr.c	/^Expr* makeBinary(Parser* p, Expr* left, Expr* right, TokenKind operator) {$/;"	f	typeref:typename:Expr *
+makeBlock	expr.c	/^Expr* makeBlock(Parser* p) {$/;"	f	typeref:typename:Expr *
 makeNumber	expr.c	/^Expr* makeNumber(Parser* p, int64_t value) {$/;"	f	typeref:typename:Expr *
 makeUnary	expr.c	/^Expr* makeUnary(Parser* p, Expr* right, TokenKind operator) {$/;"	f	typeref:typename:Expr *
 match	token.c	/^bool match(Lexer* l, char expected) {$/;"	f	typeref:typename:bool

@@ -43,26 +43,47 @@ Token tokPeekNext(Parser* p) {
 	return p->tokens.items[p->current + 1];
 }
 
+void tokConsume(Parser* p, TokenKind t, char c) {
+    if (p->tokens.items[p->current].kind == t) {
+        tokAdvance(p);
+        return;
+    }
+    printf("Expected '%c'", c);
+}
+
 void printAst(Expr* e) {
 	if (!e) return;
-	if (e->kind == EXPR_NUMBER) {
-        printf("%lld", (long long)e->as.number);
-    } else if (e->kind == EXPR_UNARY) {
-        printf("(-");
-        printAst(e->as.unary.right);
-        printf(")");
-    } else if (e->kind == EXPR_BINARY) {
-        printf("(");
-        printAst(e->as.binary.left);
-        switch (e->as.binary.op) {
-            case TOKEN_PLUS:  printf(" + "); break;
-            case TOKEN_MINUS: printf(" - "); break;
-            case TOKEN_STAR:  printf(" * "); break;
-            case TOKEN_SLASH: printf(" / "); break;
-            default: break;
-        }
-        printAst(e->as.binary.right);
-        printf(")");
+	switch(e->kind) {
+        case EXPR_NUMBER:
+           printf("%lld", (long long)e->as.number);
+        break;
+        case EXPR_UNARY:
+            printf("(-");
+            printAst(e->as.unary.right);
+            printf(")");
+        break;
+        case EXPR_BINARY:
+            printf("(");
+            printAst(e->as.binary.left);
+            switch (e->as.binary.op) {
+                case TOKEN_PLUS:  printf(" + "); break;
+                case TOKEN_MINUS: printf(" - "); break;
+                case TOKEN_STAR:  printf(" * "); break;
+                case TOKEN_SLASH: printf(" / "); break;
+                default: break;
+            }
+            printAst(e->as.binary.right);
+            printf(")");
+        break;
+        case EXPR_BLOCK:
+            printf("{\n");
+            for (size_t i = 0; i < e->as.block.count; ++i) {
+                printf("    ");
+                printAst(e->as.block.expressions[i]);
+                printf("\n");
+            }
+            printf("}\n");
+        break;
     }
 }
 
@@ -93,6 +114,13 @@ int64_t eval(Expr* e) {
                 case TOKEN_SLASH: return right != 0 ? left / right : 0;
                 default: return 0;
             }
+        }
+
+        case EXPR_BLOCK: {
+            for (size_t i = 0; i < e->as.block.count; ++i) {
+                printf("[expr %zu] = %lld\n", i, (long long)eval(e->as.block.expressions[i]));
+            }
+            return 0;
         }
     }
     return 0;
