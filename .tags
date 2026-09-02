@@ -182,6 +182,7 @@ capacity	hashmap.h	/^    size_t capacity;$/;"	m	struct:__anon58896add0508	typere
 capacity	token.h	/^	size_t capacity;$/;"	m	struct:__anonefd93d1c0108	typeref:typename:size_t
 clangd	.zed/settings.json	/^    "clangd": {$/;"	o	object:lsp
 clean	Makefile	/^clean:$/;"	t
+conditional	expr.h	/^		    Expr* conditional;$/;"	m	struct:Expr::__anonfc32de7a010a::__anonfc32de7a0508	typeref:typename:Expr *
 conditional	expr.h	/^		} conditional;$/;"	m	union:Expr::__anonfc32de7a010a	typeref:struct:Expr::__anonfc32de7a010a::__anonfc32de7a0508
 count	expr.h	/^			size_t count;$/;"	m	struct:Expr::__anonfc32de7a010a::__anonfc32de7a0408	typeref:typename:size_t
 count	expr.h	/^    size_t count;$/;"	m	struct:__anonfc32de7a0608	typeref:typename:size_t
@@ -196,7 +197,6 @@ elseBranch	expr.h	/^			Expr* elseBranch;$/;"	m	struct:Expr::__anonfc32de7a010a::
 entries	hashmap.h	/^    Entry* entries;$/;"	m	struct:__anon58896add0508	typeref:typename:Entry *
 eval	parser.c	/^int64_t eval(Expr* e) {$/;"	f	typeref:typename:int64_t
 exprAlloc	expr.c	/^static inline Expr* exprAlloc(Parser* p) {$/;"	f	typeref:typename:Expr *	file:
-expression	expr.h	/^		    Expr* expression;$/;"	m	struct:Expr::__anonfc32de7a010a::__anonfc32de7a0508	typeref:typename:Expr *
 expressions	expr.h	/^		    Expr** expressions;$/;"	m	struct:Expr::__anonfc32de7a010a::__anonfc32de7a0408	typeref:typename:Expr **
 fallbackFlags	.zed/settings.json	/^        "fallbackFlags": [$/;"	a	object:lsp.clangd.initialization_options
 findEntry	hashmap.h	/^static Entry* findEntry(Entry* entries, size_t capacity, const char* key) {$/;"	f	typeref:typename:Entry *
@@ -250,6 +250,7 @@ tableDelete	hashmap.h	/^bool tableDelete(Table* table, const char* key) {$/;"	f	
 tableGet	hashmap.h	/^bool tableGet(Table* table, const char* key, Value* value) {$/;"	f	typeref:typename:bool
 tableSet	hashmap.h	/^bool tableSet(Table* table, const char* key, Value value) {$/;"	f	typeref:typename:bool
 tokAdvance	parser.c	/^Token tokAdvance(Parser* p) {$/;"	f	typeref:typename:Token
+tokConsume	parser.c	/^void tokConsume(Parser* p, TokenKind t, char c) {$/;"	f	typeref:typename:void
 tokPeek	parser.c	/^Token tokPeek(Parser* p) {$/;"	f	typeref:typename:Token
 tokPeekNext	parser.c	/^Token tokPeekNext(Parser* p) {$/;"	f	typeref:typename:Token
 tokens	parser.h	/^	TokenList tokens;$/;"	m	struct:Parser	typeref:typename:TokenList

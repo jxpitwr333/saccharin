@@ -42,6 +42,17 @@ Expr* parsePrimary(Parser* p) {
 
             da_free(&exprs);
             return block;
+        case TOKEN_IF:
+            Expr* condition = parseExpr(p, 0);
+            Expr* thenBranch = parseExpr(p, 0);
+
+            Expr* elseBranch = NULL;
+            if (tokPeek(p).kind == TOKEN_ELSE) {
+                tokAdvance(p)
+                elseBranch = parseExpr(p, 0);
+            }
+
+            return makeConditional(p, condition, thenBranch, elseBranch);
         default:
             return makeNumber(p, 0); // don't return null
     }
@@ -92,5 +103,14 @@ Expr* makeBlock(Parser* p) {
     e->kind = EXPR_BLOCK;
     e->as.block.expressions = NULL;
     e->as.block.count = 0;
+    return e;
+}
+
+Expr* makeConditional(Parser* p, Expr* condition, Expr* thenBranch, Expr* elseBranch) {
+    Expr* e = exprAlloc(p);
+    e->kind = EXPR_CONDITIONAL;
+    e->as.conditional.condition = condition;
+    e->as.conditional.thenBranch = thenBranch;
+    e->as.conditional.elseBranch;
     return e;
 }
