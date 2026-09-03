@@ -2,4 +2,4 @@
 .zed/*
 .clangd
 .git
-
+*.exe

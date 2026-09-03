@@ -48,5 +48,6 @@ Expr* makeNumber(Parser* p, int64_t value);
 Expr* makeBinary(Parser* p, Expr* left, Expr* right, TokenKind op);
 Expr* makeUnary(Parser* p, Expr* right, TokenKind op);
 Expr* makeBlock(Parser* p);
-Expr* makeConditional(Parser* p, Expr* condition, Expr* thenBranch, Expr* elseBranch) {
+Expr* makeConditional(Parser* p, Expr* condition, Expr* thenBranch, Expr* elseBranch);
+
 #endif

@@ -48,7 +48,7 @@ Expr* parsePrimary(Parser* p) {
 
             Expr* elseBranch = NULL;
             if (tokPeek(p).kind == TOKEN_ELSE) {
-                tokAdvance(p)
+                tokAdvance(p);
                 elseBranch = parseExpr(p, 0);
             }
 
@@ -111,6 +111,6 @@ Expr* makeConditional(Parser* p, Expr* condition, Expr* thenBranch, Expr* elseBr
     e->kind = EXPR_CONDITIONAL;
     e->as.conditional.condition = condition;
     e->as.conditional.thenBranch = thenBranch;
-    e->as.conditional.elseBranch;
+    e->as.conditional.elseBranch = elseBranch;
     return e;
 }

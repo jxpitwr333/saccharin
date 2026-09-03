@@ -122,6 +122,16 @@ int64_t eval(Expr* e) {
             }
             return 0;
         }
+
+		case EXPR_CONDITIONAL: {
+			int64_t res = eval(e->as.conditional.condition);
+			if (res) {
+				eval(e->as.conditional.thenBranch);
+			} else {
+				if (e->as.conditional.elseBranch) eval(e->as.conditional.elseBranch);
+			}
+			return 0;
+		}
     }
     return 0;
 }
