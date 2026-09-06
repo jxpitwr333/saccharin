@@ -112,6 +112,12 @@ int64_t eval(Expr* e) {
                 case TOKEN_MINUS: return left - right;
                 case TOKEN_STAR:  return left * right;
                 case TOKEN_SLASH: return right != 0 ? left / right : 0;
+                case TOKEN_EQUAL_EQUAL:  return left == right;
+                case TOKEN_BANG_EQUAL: return left != right;
+                case TOKEN_GREATER_EQUAL:  return left >= right;
+                case TOKEN_LESS_EQUAL: return left <= right;
+                case TOKEN_GREATER:  return left > right;
+                case TOKEN_LESS: return left < right;
                 default: return 0;
             }
         }
