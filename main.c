@@ -35,7 +35,6 @@ int main(void) {
 	initTable(&keywords);
 	tableSet(&keywords, "and",   INT_VAL(TOKEN_AND));
     tableSet(&keywords, "else",  INT_VAL(TOKEN_ELSE));
-	tableSet(&keywords, "elseif",INT_VAL(TOKEN_ELSEIF));
     tableSet(&keywords, "false", INT_VAL(TOKEN_FALSE));
     tableSet(&keywords, "for",   INT_VAL(TOKEN_FOR));
     tableSet(&keywords, "fun",   INT_VAL(TOKEN_FUN));
