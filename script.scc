@@ -1,2 +1,0 @@
-let x = 7;
-let z = let y = if x == 7 { 1; } else { 2; };

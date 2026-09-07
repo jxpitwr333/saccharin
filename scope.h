@@ -9,7 +9,7 @@
 #endif
 
 static inline int64_t scopeDecl(Parser* p, Token t) {
-    int64_t slot = p->symbolList.count;
+    int64_t slot = p->symbolList.count - p->functionBase;
     
     char* buf = arenaAlloc(&p->strArena, t.length + 1);
     memcpy(buf, p->source + t.start, t.length);
@@ -31,6 +31,14 @@ static inline int64_t scopeResolve(Parser* p, Token t) {
         }
     }
     return -1;
+}
+
+static inline int64_t scopeBegin(Parser* p) {
+    return p->symbolList.count;
+}
+
+static inline void scopeEnd(Parser* p, int64_t mark) {
+    p->symbolList.count = mark;
 }
 
 #endif //SCOPE_H

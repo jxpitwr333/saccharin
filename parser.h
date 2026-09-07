@@ -26,6 +26,7 @@ struct Parser {
 	char* source;
 	size_t current;
 	size_t line;
+	int64_t functionBase;
 };
 
 int precedenceOf(TokenKind kind);

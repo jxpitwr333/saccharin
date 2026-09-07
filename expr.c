@@ -1,12 +1,12 @@
-#include "scope.h"
 #ifndef UNITY_BUILD
-#include "ast_types.h"
-#include "expr.h"
-#include "token.h"
-#include <stdio.h>
-#include "arena.h"
-#include <stdlib.h>
-#include "parser.h"
+	#include "scope.h"
+	#include "ast_types.h"
+	#include "expr.h"
+	#include "token.h"
+	#include <stdio.h>
+	#include "arena.h"
+	#include <stdlib.h>
+	#include "parser.h"
 #endif
 
 Expr* parsePrimary(Parser* p) {
@@ -24,7 +24,9 @@ Expr* parsePrimary(Parser* p) {
             Expr* operand = parseExpr(p, precedenceOf(TOKEN_MINUS));
             return makeUnary(p, operand, TOKEN_MINUS);
         case TOKEN_LEFT_BRACE:
+			int64_t mark = scopeBegin(p);
             Expr* block = makeBlock(p);
+
             ExprList exprs = {0};
             exprs.items = NULL;
             while (tokPeek(p).kind != TOKEN_RIGHT_BRACE) {
@@ -42,6 +44,7 @@ Expr* parsePrimary(Parser* p) {
             memcpy(block->as.block.expressions, exprs.items, exprs.count * sizeof(Expr*));
 
             da_free(&exprs);
+			scopeEnd(p, mark);
             return block;
         case TOKEN_IF:
             Expr* condition = parseExpr(p, 0);

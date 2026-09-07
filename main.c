@@ -113,12 +113,14 @@ int main(void) {
 
 	Parser parser = {
 	    .symbolList = {0},
+		.env = {0},
 		.astArena = arenaInit(1 MB),
         .strArena = arenaInit(1 MB),
 		.current = 0,
 		.line = 1,
 		.source = lex.source,
-		.tokens = lex.tokens
+		.tokens = lex.tokens,
+		.functionBase = 0
 	};
 
 	Expr* ast = NULL;
