@@ -57,9 +57,9 @@ Expr* parsePrimary(Parser* p) {
             Token name = tokPeek(p);
             if (!tokConsume(p, TOKEN_IDENTIFIER, "identifier", true)) return makeNumber(p, 0);
 
-            int64_t slot = scopeDecl(p, name);
             tokConsume(p, TOKEN_EQUAL, "=", true);
             Expr* initializer = parseExpr(p, 0);
+            int64_t slot = scopeDecl(p, name);
 
             return makeDecl(p, slot, initializer);
         }
