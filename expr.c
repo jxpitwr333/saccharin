@@ -1,3 +1,4 @@
+#include "scope.h"
 #ifndef UNITY_BUILD
 #include "ast_types.h"
 #include "expr.h"
@@ -52,15 +53,24 @@ Expr* parsePrimary(Parser* p) {
             }
 
             return makeConditional(p, condition, thenBranch, elseBranch);
-        case TOKEN_LET:
-            tokConsume(p, TOKEN_IDENTIFIER, "identifier", true);
+        case TOKEN_LET: {
             Token name = tokPeek(p);
+            if (!tokConsume(p, TOKEN_IDENTIFIER, "identifier", true)) return makeNumber(p, 0);
 
             int64_t slot = scopeDecl(p, name);
             tokConsume(p, TOKEN_EQUAL, "=", true);
             Expr* initializer = parseExpr(p, 0);
 
             return makeDecl(p, slot, initializer);
+        }
+        case TOKEN_IDENTIFIER: {
+            int64_t slot = scopeResolve(p, t);
+            if (slot < 0) {
+                fprintf(stderr, "Undeclared identifier '%.*s' at line '%zu'\n", (int)t.length, p->source + t.start, p->line);
+            }
+
+            return makeRead(p, slot);
+        }
         default:
             return makeNumber(p, 0); // don't return null
     }
@@ -128,5 +138,12 @@ Expr* makeDecl(Parser* p, int64_t slot, Expr* initializer) {
     e->kind = EXPR_VAR_DECL;
     e->as.varDecl.slot = slot;
     e->as.varDecl.value = initializer;
+    return e;
+}
+
+Expr* makeRead(Parser* p, int64_t slot) {
+    Expr* e = exprAlloc(p);
+    e->kind = EXPR_VAR_READ;
+    e->as.varRead.slot = slot;
     return e;
 }

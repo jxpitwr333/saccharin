@@ -1,3 +1,4 @@
+#include "macros.h"
 #ifndef UNITY_BUILD
     #include "ast_types.h"
     #include "parser.h"
@@ -53,16 +54,24 @@ bool tokConsume(Parser* p, TokenKind t, const char* s, bool msg) {
 }
 
 void printAst(Expr* e) {
-	if (!e) return;
-	switch(e->kind) {
+    if (!e) return;
+    switch(e->kind) {
         case EXPR_NUMBER:
-           printf("%lld", (long long)e->as.number);
-        break;
+            printf("%lld", (long long)e->as.number);
+            break;
+        case EXPR_VAR_DECL:
+            printf("(let slot_%lld = ", (long long)e->as.varDecl.slot);
+            printAst(e->as.varDecl.value);
+            printf(")");
+            break;
+        case EXPR_VAR_READ:
+            printf("slot_%lld", (long long)e->as.varRead.slot);
+            break;
         case EXPR_UNARY:
             printf("(-");
             printAst(e->as.unary.right);
             printf(")");
-        break;
+            break;
         case EXPR_BINARY:
             printf("(");
             printAst(e->as.binary.left);
@@ -75,7 +84,7 @@ void printAst(Expr* e) {
             }
             printAst(e->as.binary.right);
             printf(")");
-        break;
+            break;
         case EXPR_BLOCK:
             printf("{\n");
             for (size_t i = 0; i < e->as.block.count; ++i) {
@@ -84,11 +93,24 @@ void printAst(Expr* e) {
                 printf("\n");
             }
             printf("}\n");
-        break;
+            break;
+        case EXPR_CONDITIONAL:
+            printf("(if ");
+            printAst(e->as.conditional.condition);
+            printf(" ");
+            printAst(e->as.conditional.thenBranch);
+            if (e->as.conditional.elseBranch) {
+                printf(" else ");
+                printAst(e->as.conditional.elseBranch);
+            }
+            printf(")");
+            break;
+        default:
+            break;
     }
 }
 
-int64_t eval(Expr* e) {
+int64_t eval(Expr* e, Parser* p) {
     if (!e) return 0;
 
     switch (e->kind) {
@@ -96,7 +118,7 @@ int64_t eval(Expr* e) {
             return e->as.number;
 
 		case EXPR_UNARY: {
-            int64_t val = eval(e->as.unary.right);
+            int64_t val = eval(e->as.unary.right, p);
 
             switch (e->as.unary.op) {
                 case TOKEN_MINUS: return -val;
@@ -105,8 +127,8 @@ int64_t eval(Expr* e) {
         }
 
         case EXPR_BINARY: {
-            int64_t left  = eval(e->as.binary.left);
-            int64_t right = eval(e->as.binary.right);
+            int64_t left  = eval(e->as.binary.left, p);
+            int64_t right = eval(e->as.binary.right, p);
 
             switch (e->as.binary.op) {
                 case TOKEN_PLUS:  return left + right;
@@ -125,20 +147,29 @@ int64_t eval(Expr* e) {
 
         case EXPR_BLOCK: {
             for (size_t i = 0; i < e->as.block.count; ++i) {
-                printf("[expr %zu] = %lld\n", i, (long long)eval(e->as.block.expressions[i]));
+                printf("[expr %zu] = %lld\n", i, (long long)eval(e->as.block.expressions[i], p));
             }
             return 0;
         }
 
 		case EXPR_CONDITIONAL: {
-			int64_t res = eval(e->as.conditional.condition);
+			int64_t res = eval(e->as.conditional.condition, p);
 			if (res) {
-				eval(e->as.conditional.thenBranch);
+				eval(e->as.conditional.thenBranch, p);
 			} else {
-				if (e->as.conditional.elseBranch) eval(e->as.conditional.elseBranch);
+				if (e->as.conditional.elseBranch) eval(e->as.conditional.elseBranch, p);
 			}
 			return 0;
 		}
+
+        case EXPR_VAR_DECL: {
+            int64_t val = eval(e->as.varDecl.value, p);
+            da_at(&p->env, val, e->as.varDecl.slot);
+            return val;
+        }
+
+        case EXPR_VAR_READ:
+            return p->env.items[e->as.varRead.slot];
     }
     return 0;
 }

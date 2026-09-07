@@ -257,7 +257,7 @@ readFileBinary	file.h	/^char* readFileBinary(char* fileName, size_t* fileSizeOut
 right	expr.h	/^			Expr* right;$/;"	m	struct:Expr::__anonfc32de7a010a::__anonfc32de7a0208	typeref:typename:Expr *
 right	expr.h	/^			Expr* right;$/;"	m	struct:Expr::__anonfc32de7a010a::__anonfc32de7a0308	typeref:typename:Expr *
 run	Makefile	/^run:$/;"	t
-scopeDecl	scope.h	/^static inline int64_t scopeDecl(SymbolList* symbolList, const char* name, size_t length) {$/;"	f	typeref:typename:int64_t
+scopeDecl	scope.h	/^static inline int64_t scopeDecl(Parser* p, Token t) {$/;"	f	typeref:typename:int64_t
 scopeResolve	scope.h	/^static inline int64_t scopeResolve(SymbolList* symbolList, const char* name, size_t length) {$/;"	f	typeref:typename:int64_t
 slot	ast_types.h	/^    int64_t slot;$/;"	m	struct:__anonbce2a1170308	typeref:typename:int64_t
 slot	expr.h	/^		    int64_t slot;$/;"	m	struct:Expr::__anonfc32de7a010a::__anonfc32de7a0608	typeref:typename:int64_t
@@ -266,6 +266,7 @@ source	parser.h	/^	char* source;$/;"	m	struct:Parser	typeref:typename:char *
 source	token.h	/^	char* source;$/;"	m	struct:__anonefd93d1c0208	typeref:typename:char *
 start	token.h	/^	size_t start;$/;"	m	struct:Token	typeref:typename:size_t
 start	token.h	/^	size_t start;$/;"	m	struct:__anonefd93d1c0208	typeref:typename:size_t
+strArena	parser.h	/^    Arena strArena;$/;"	m	struct:Parser	typeref:typename:Arena
 string	hashmap.h	/^        char* string;$/;"	m	union:__anon58896add0208::__anon58896add030a	typeref:typename:char *
 symbolList	parser.h	/^    SymbolList symbolList;$/;"	m	struct:Parser	typeref:typename:SymbolList
 tableDelete	hashmap.h	/^bool tableDelete(Table* table, const char* key) {$/;"	f	typeref:typename:bool

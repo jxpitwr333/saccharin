@@ -130,7 +130,7 @@ int main(void) {
         printf("--- AST ---\n");
 		printAst(ast);
         printf("\n--- EVAL ---\n");
-		int64_t result = (long long)eval(ast);
+		int64_t result = (long long)eval(ast, &parser);
         printf("block result = %lld", (long long)result);
 	}
 

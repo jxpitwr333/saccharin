@@ -10,8 +10,16 @@
 #include "scope.h"
 #endif
 
+// the env is just a dynamic array
+typedef struct {
+    int64_t* items;
+    size_t count;
+    size_t capacity;
+} Environment;
+
 struct Parser {
     SymbolList symbolList;
+    Environment env;
 	TokenList tokens;
 	Arena astArena;
     Arena strArena;
@@ -27,6 +35,6 @@ Token tokPeek(Parser* p);
 Token tokPeekNext(Parser* p);
 bool tokConsume(Parser* p, TokenKind t, const char* s, bool msg);
 void printAst(Expr* e);
-int64_t eval(Expr* e);
+int64_t eval(Expr* e, Parser* p);
 
 #endif

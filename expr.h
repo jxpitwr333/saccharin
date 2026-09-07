@@ -59,5 +59,6 @@ Expr* makeUnary(Parser* p, Expr* right, TokenKind op);
 Expr* makeBlock(Parser* p);
 Expr* makeConditional(Parser* p, Expr* condition, Expr* thenBranch, Expr* elseBranch);
 Expr* makeDecl(Parser* p, int64_t slot, Expr* initializer);
+Expr* makeRead(Parser* p, int64_t slot);
 
 #endif

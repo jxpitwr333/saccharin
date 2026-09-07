@@ -20,10 +20,14 @@ static inline int64_t scopeDecl(Parser* p, Token t) {
     return slot;
 }
 
-static inline int64_t scopeResolve(SymbolList* symbolList, const char* name, size_t length) {
-    for (int i = symbolList->count - 1; i >= 0; --i) {
-        if (symbolList->items[i].length == length && strncmp(symbolList->items[i].name, name, length) == 0) {
-            return symbolList->items[i].slot;
+static inline int64_t scopeResolve(Parser* p, Token t) {
+    char buf[t.length + 1];
+    memcpy(buf, p->source + t.start, t.length);
+    buf[t.length] = '\0';
+
+    for (int i = p->symbolList.count - 1; i >= 0; --i) {
+        if (p->symbolList.items[i].length == t.length && strncmp(p->symbolList.items[i].name, buf, t.length) == 0) {
+            return p->symbolList.items[i].slot;
         }
     }
     return -1;
