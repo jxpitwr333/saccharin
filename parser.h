@@ -34,7 +34,6 @@ Token tokAdvance(Parser* p);
 Token tokPeek(Parser* p);
 Token tokPeekNext(Parser* p);
 bool tokConsume(Parser* p, TokenKind t, const char* s, bool msg);
-void printAst(Expr* e);
 int64_t eval(Expr* e, Parser* p);
 
 #endif

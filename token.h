@@ -14,6 +14,18 @@ struct Token {
 	size_t line;
 };
 
+static const char* const tokenLexemes[] = {
+#define X(name, lexeme) [name] = lexeme,
+	TOKEN_LIST(X)
+#undef X
+};
+
+static inline const char* tokenLexeme(TokenKind kind) {
+	size_t i = (size_t)kind;
+	if (i >= sizeof(tokenLexemes) / sizeof(tokenLexemes[0])) return "<?>";
+	return tokenLexemes[i];
+}
+
 typedef struct {
 	Token* items;
 	size_t capacity;

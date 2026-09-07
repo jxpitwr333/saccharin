@@ -21,6 +21,7 @@
 #include "expr.h"
 #include "scope.h"
 #include "parser.h"
+#include "pretty.h"
 
 #include "token.c"
 #include "expr.c"
@@ -127,7 +128,7 @@ int main(void) {
 		tokConsume(&parser, TOKEN_SEMICOLON, ";", false);
 
         printf("--- AST ---\n");
-		printAst(ast);
+		printAst(ast, &parser);
         printf("\n--- EVAL ---\n");
 		int64_t result = (long long)eval(ast, &parser);
         printf("block result = %lld\n", (long long)result);

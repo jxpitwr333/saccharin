@@ -53,63 +53,6 @@ bool tokConsume(Parser* p, TokenKind t, const char* s, bool msg) {
     return false;
 }
 
-void printAst(Expr* e) {
-    if (!e) return;
-    switch(e->kind) {
-        case EXPR_NUMBER:
-            printf("%lld", (long long)e->as.number);
-            break;
-        case EXPR_VAR_DECL:
-            printf("(let slot_%lld = ", (long long)e->as.varDecl.slot);
-            printAst(e->as.varDecl.value);
-            printf(")");
-            break;
-        case EXPR_VAR_READ:
-            printf("slot_%lld", (long long)e->as.varRead.slot);
-            break;
-        case EXPR_UNARY:
-            printf("(-");
-            printAst(e->as.unary.right);
-            printf(")");
-            break;
-        case EXPR_BINARY:
-            printf("(");
-            printAst(e->as.binary.left);
-            switch (e->as.binary.op) {
-                case TOKEN_PLUS:  printf(" + "); break;
-                case TOKEN_MINUS: printf(" - "); break;
-                case TOKEN_STAR:  printf(" * "); break;
-                case TOKEN_SLASH: printf(" / "); break;
-                default: break;
-            }
-            printAst(e->as.binary.right);
-            printf(")");
-            break;
-        case EXPR_BLOCK:
-            printf("{\n");
-            for (size_t i = 0; i < e->as.block.count; ++i) {
-                printf("    ");
-                printAst(e->as.block.expressions[i]);
-                printf("\n");
-            }
-            printf("}\n");
-            break;
-        case EXPR_CONDITIONAL:
-            printf("(if ");
-            printAst(e->as.conditional.condition);
-            printf(" ");
-            printAst(e->as.conditional.thenBranch);
-            if (e->as.conditional.elseBranch) {
-                printf(" else ");
-                printAst(e->as.conditional.elseBranch);
-            }
-            printf(")");
-            break;
-        default:
-            break;
-    }
-}
-
 int64_t eval(Expr* e, Parser* p) {
     if (!e) return 0;
 
