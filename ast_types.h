@@ -21,39 +21,44 @@ typedef enum {
 	EXPR_VAR_READ
 } ExprKind;
 
+#define TOKEN_LIST(X)\
+	X(TOKEN_NONE, "<none>")\
+	X(TOKEN_LEFT_PAREN, "(")\
+	X(TOKEN_RIGHT_PAREN, ")")\
+	X(TOKEN_LEFT_BRACE, "{")\
+	X(TOKEN_RIGHT_BRACE, "}")\
+	X(TOKEN_PLUS, "+")\
+	X(TOKEN_MINUS, "-")\
+	X(TOKEN_STAR, "*")\
+	X(TOKEN_SLASH, "/")\
+	X(TOKEN_SEMICOLON, ";")\
+	X(TOKEN_NUMBER_LITERAL, "<number>")\
+	X(TOKEN_EQUAL, "=")\
+	X(TOKEN_EQUAL_EQUAL, "==")\
+	X(TOKEN_BANG, "!")\
+	X(TOKEN_BANG_EQUAL, "!=")\
+	X(TOKEN_GREATER, ">")\
+	X(TOKEN_LESS, "<")\
+	X(TOKEN_GREATER_EQUAL, ">=")\
+	X(TOKEN_LESS_EQUAL, "<=")\
+	X(TOKEN_IDENTIFIER, "<identifier>")\
+	X(TOKEN_IF, "if")\
+	X(TOKEN_ELSE, "else")\
+	X(TOKEN_AND, "and")\
+	X(TOKEN_OR, "or")\
+	X(TOKEN_TRUE, "true")\
+	X(TOKEN_FALSE, "false")\
+	X(TOKEN_FOR, "for")\
+	X(TOKEN_FUN, "fun")\
+	X(TOKEN_RETURN, "return")\
+	X(TOKEN_WHILE, "while")\
+	X(TOKEN_LET, "let")\
+	X(TOKEN_EOF, "<eof>")
+
 typedef enum {
-	TOKEN_NONE,
-	TOKEN_LEFT_PAREN,
-	TOKEN_RIGHT_PAREN,
-    TOKEN_LEFT_BRACE,
-    TOKEN_RIGHT_BRACE,
-	TOKEN_PLUS,
-	TOKEN_MINUS,
-	TOKEN_STAR,
-	TOKEN_SLASH,
-	TOKEN_SEMICOLON,
-	TOKEN_NUMBER_LITERAL,
-	TOKEN_EQUAL, // =
-	TOKEN_EQUAL_EQUAL, // ==
-	TOKEN_BANG,
-	TOKEN_BANG_EQUAL, // !=
-	TOKEN_GREATER, // >
-	TOKEN_LESS, // <
-	TOKEN_GREATER_EQUAL, // >=
-	TOKEN_LESS_EQUAL, // <=
-	TOKEN_IDENTIFIER,
-	TOKEN_IF,
-	TOKEN_ELSE,
-	TOKEN_AND,
-	TOKEN_OR,
-    TOKEN_TRUE,
-    TOKEN_FALSE,
-    TOKEN_FOR,
-    TOKEN_FUN,
-    TOKEN_RETURN,
-    TOKEN_WHILE,
-    TOKEN_LET,
-	TOKEN_EOF
+#define X(name, lexeme) name,
+	TOKEN_LIST(X)
+#undef X
 } TokenKind;
 
 typedef struct {
