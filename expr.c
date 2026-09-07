@@ -30,7 +30,7 @@ Expr* parsePrimary(Parser* p) {
                 Expr* expr = parseExpr(p, 0);
                 da_append(&exprs, expr);
 
-                tokConsume(p, TOKEN_SEMICOLON, ';');
+                tokConsume(p, TOKEN_SEMICOLON, ";", true);
             }
 
             if (tokAdvance(p).kind != TOKEN_RIGHT_BRACE)
@@ -38,7 +38,7 @@ Expr* parsePrimary(Parser* p) {
 
             block->as.block.expressions = arenaAlloc(&p->astArena, exprs.count * sizeof(Expr*));
             block->as.block.count = exprs.count;
-            memcpy(block->as.block.expressions, exprs.items, exprs.count * sizeof(Expr*));                
+            memcpy(block->as.block.expressions, exprs.items, exprs.count * sizeof(Expr*));
 
             da_free(&exprs);
             return block;
@@ -47,12 +47,20 @@ Expr* parsePrimary(Parser* p) {
             Expr* thenBranch = parseExpr(p, 0);
 
             Expr* elseBranch = NULL;
-            if (tokPeek(p).kind == TOKEN_ELSE) {
-                tokAdvance(p);
+            if (tokConsume(p, TOKEN_ELSE, "else", true)) {
                 elseBranch = parseExpr(p, 0);
             }
 
             return makeConditional(p, condition, thenBranch, elseBranch);
+        case TOKEN_LET:
+            tokConsume(p, TOKEN_IDENTIFIER, "identifier", true);
+            Token name = tokPeek(p);
+
+            int64_t slot = scopeDecl(p, name);
+            tokConsume(p, TOKEN_EQUAL, "=", true);
+            Expr* initializer = parseExpr(p, 0);
+
+            return makeDecl(p, slot, initializer);
         default:
             return makeNumber(p, 0); // don't return null
     }
@@ -112,5 +120,13 @@ Expr* makeConditional(Parser* p, Expr* condition, Expr* thenBranch, Expr* elseBr
     e->as.conditional.condition = condition;
     e->as.conditional.thenBranch = thenBranch;
     e->as.conditional.elseBranch = elseBranch;
+    return e;
+}
+
+Expr* makeDecl(Parser* p, int64_t slot, Expr* initializer) {
+    Expr* e = exprAlloc(p);
+    e->kind = EXPR_VAR_DECL;
+    e->as.varDecl.slot = slot;
+    e->as.varDecl.value = initializer;
     return e;
 }

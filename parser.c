@@ -43,12 +43,13 @@ Token tokPeekNext(Parser* p) {
 	return p->tokens.items[p->current + 1];
 }
 
-void tokConsume(Parser* p, TokenKind t, char c) {
+bool tokConsume(Parser* p, TokenKind t, const char* s, bool msg) {
     if (p->tokens.items[p->current].kind == t) {
         tokAdvance(p);
-        return;
+        return true;
     }
-    printf("Expected '%c'", c);
+    if (msg) printf("Expected '%s' at line '%zu'", s, p->line);
+    return false;
 }
 
 void printAst(Expr* e) {

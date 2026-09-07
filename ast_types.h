@@ -1,6 +1,11 @@
 #ifndef AST_TYPES_H
 #define AST_TYPES_H
 
+#ifndef UNITY_BUILD
+    #include <stddef.h>
+    #include <stdint.h>
+#endif
+
 typedef struct Parser Parser;
 typedef struct Expr Expr;
 typedef struct Token Token;
@@ -10,7 +15,10 @@ typedef enum {
 	EXPR_UNARY,
 	EXPR_NUMBER,
 	EXPR_BLOCK,
-	EXPR_CONDITIONAL
+	EXPR_CONDITIONAL,
+	EXPR_FUN,
+	EXPR_VAR_DECL,
+	EXPR_VAR_READ
 } ExprKind;
 
 typedef enum {
@@ -44,7 +52,20 @@ typedef enum {
     TOKEN_FUN,
     TOKEN_RETURN,
     TOKEN_WHILE,
+    TOKEN_LET,
 	TOKEN_EOF
 } TokenKind;
+
+typedef struct {
+    const char* name;
+    size_t length;
+    int64_t slot;
+} Symbol;
+
+typedef struct {
+    Symbol* items;
+    size_t capacity;
+    size_t count;
+} SymbolList;
 
 #endif

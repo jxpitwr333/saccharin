@@ -7,11 +7,14 @@
 #include "arena.h"
 #include <stdint.h>
 #include <stdbool.h>
+#include "scope.h"
 #endif
 
 struct Parser {
+    SymbolList symbolList;
 	TokenList tokens;
 	Arena astArena;
+    Arena strArena;
 	char* source;
 	size_t current;
 	size_t line;
@@ -22,7 +25,7 @@ bool parserIsAtEnd(Parser* p);
 Token tokAdvance(Parser* p);
 Token tokPeek(Parser* p);
 Token tokPeekNext(Parser* p);
-void tokConsume(Parser* p, TokenKind t, char c);
+bool tokConsume(Parser* p, TokenKind t, const char* s, bool msg);
 void printAst(Expr* e);
 int64_t eval(Expr* e);
 

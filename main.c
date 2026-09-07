@@ -19,6 +19,7 @@
 #include "macros.h"
 #include "token.h"
 #include "expr.h"
+#include "scope.h"
 #include "parser.h"
 
 #include "token.c"
@@ -33,16 +34,17 @@ int main(void) {
 	if (!source) return 1;
 
 	initTable(&keywords);
-	tableSet(&keywords, "and",   INT_VAL(TOKEN_AND));
-    tableSet(&keywords, "else",  INT_VAL(TOKEN_ELSE));
-    tableSet(&keywords, "false", INT_VAL(TOKEN_FALSE));
-    tableSet(&keywords, "for",   INT_VAL(TOKEN_FOR));
-    tableSet(&keywords, "fun",   INT_VAL(TOKEN_FUN));
-    tableSet(&keywords, "if",    INT_VAL(TOKEN_IF));
-    tableSet(&keywords, "or",    INT_VAL(TOKEN_OR));
-    tableSet(&keywords, "return",INT_VAL(TOKEN_RETURN));
-    tableSet(&keywords, "true",  INT_VAL(TOKEN_TRUE));
-    tableSet(&keywords, "while", INT_VAL(TOKEN_WHILE));
+	tableSet(&keywords, "and",    INT_VAL(TOKEN_AND));
+    tableSet(&keywords, "else",   INT_VAL(TOKEN_ELSE));
+    tableSet(&keywords, "false",  INT_VAL(TOKEN_FALSE));
+    tableSet(&keywords, "for",    INT_VAL(TOKEN_FOR));
+    tableSet(&keywords, "fun",    INT_VAL(TOKEN_FUN));
+    tableSet(&keywords, "if",     INT_VAL(TOKEN_IF));
+    tableSet(&keywords, "or",     INT_VAL(TOKEN_OR));
+    tableSet(&keywords, "return", INT_VAL(TOKEN_RETURN));
+    tableSet(&keywords, "true",   INT_VAL(TOKEN_TRUE));
+    tableSet(&keywords, "while",  INT_VAL(TOKEN_WHILE));
+    tableSet(&keywords, "let",    INT_VAL(TOKEN_LET));
 
 	Lexer lex = {
 		.current = 0,
@@ -110,7 +112,9 @@ int main(void) {
     addToken(&lex, TOKEN_EOF);
 
 	Parser parser = {
+	    .symbolList = {0},
 		.astArena = arenaInit(1 MB),
+        .strArena = arenaInit(1 MB),
 		.current = 0,
 		.line = 1,
 		.source = lex.source,
@@ -121,9 +125,7 @@ int main(void) {
 	while (!parserIsAtEnd(&parser)) {
 		ast = parseExpr(&parser, 0);
 
-		if (tokPeek(&parser).kind == TOKEN_SEMICOLON) {
-			tokAdvance(&parser);
-		}
+		tokConsume(&parser, TOKEN_SEMICOLON, ";", false);
 
         printf("--- AST ---\n");
 		printAst(ast);
@@ -132,6 +134,9 @@ int main(void) {
         printf("block result = %lld", (long long)result);
 	}
 
+    da_free(&parser.symbolList);
+    arenaFree(&parser.strArena);
+    arenaFree(&parser.astArena);
 	free(lex.tokens.items);
 	free(lex.source);
 	freeTable(&keywords);
