@@ -21,7 +21,7 @@ Expr* parsePrimary(Parser* p) {
                 fprintf(stderr, "Expected ')'\n");
             return expr;
         case TOKEN_MINUS:
-            Expr* operand = parseExpr(p, 3);
+            Expr* operand = parseExpr(p, precedenceOf(TOKEN_MINUS));
             return makeUnary(p, operand, TOKEN_MINUS);
         case TOKEN_LEFT_BRACE:
             Expr* block = makeBlock(p);
@@ -65,12 +65,18 @@ Expr* parsePrimary(Parser* p) {
         }
         case TOKEN_IDENTIFIER: {
             int64_t slot = scopeResolve(p, t);
-            if (slot < 0) {
-                fprintf(stderr, "Undeclared identifier '%.*s' at line '%zu'\n", (int)t.length, p->source + t.start, p->line);
-				return makeNumber(p, 0);
-            }
 
-            return makeRead(p, slot);
+			if (slot < 0) {
+				fprintf(stderr, "Undeclared identifier '%.*s' at line '%zu'\n", (int)t.length, p->source + t.start, p->line);
+				return makeNumber(p, 0);
+			}
+
+			if (tokConsume(p, TOKEN_EQUAL, "=", false)) {
+				Expr* newVal = parseExpr(p, 0);
+				return makeAssign(p, slot, newVal);
+			} else {
+				return makeRead(p, slot);
+			}
         }
         default:
             return makeNumber(p, 0); // don't return null
@@ -146,5 +152,13 @@ Expr* makeRead(Parser* p, int64_t slot) {
     Expr* e = exprAlloc(p);
     e->kind = EXPR_VAR_READ;
     e->as.varRead.slot = slot;
+    return e;
+}
+
+Expr* makeAssign(Parser* p, int64_t slot, Expr* newValue) {
+	Expr* e = exprAlloc(p);
+    e->kind = EXPR_VAR_ASSIGN;
+    e->as.varAssign.slot = slot;
+	e->as.varAssign.newValue = newValue;
     return e;
 }

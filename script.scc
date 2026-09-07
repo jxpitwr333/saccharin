@@ -1,2 +1,2 @@
-let x = 5;
-x + 2;
+let x = 7;
+let z = let y = if x == 7 { 1; } else { 2; };

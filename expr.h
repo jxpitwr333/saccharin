@@ -42,6 +42,11 @@ struct Expr {
 		struct {
 		    int64_t slot;
 		} varRead;
+
+		struct {
+		    int64_t slot;
+			Expr* newValue;
+		} varAssign;
 	} as;
 };
 
@@ -60,5 +65,6 @@ Expr* makeBlock(Parser* p);
 Expr* makeConditional(Parser* p, Expr* condition, Expr* thenBranch, Expr* elseBranch);
 Expr* makeDecl(Parser* p, int64_t slot, Expr* initializer);
 Expr* makeRead(Parser* p, int64_t slot);
+Expr* makeAssign(Parser* p, int64_t slot, Expr* newValue);
 
 #endif

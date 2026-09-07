@@ -18,7 +18,8 @@ typedef enum {
 	EXPR_CONDITIONAL,
 	EXPR_FUN,
 	EXPR_VAR_DECL,
-	EXPR_VAR_READ
+	EXPR_VAR_READ,
+	EXPR_VAR_ASSIGN
 } ExprKind;
 
 #define TOKEN_LIST(X)\

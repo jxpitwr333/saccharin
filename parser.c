@@ -89,20 +89,25 @@ int64_t eval(Expr* e, Parser* p) {
         }
 
         case EXPR_BLOCK: {
+			int64_t lastRes;
             for (size_t i = 0; i < e->as.block.count; ++i) {
-                printf("[expr %zu] = %lld\n", i, (long long)eval(e->as.block.expressions[i], p));
-            }
-            return 0;
+				lastRes = (long long)eval(e->as.block.expressions[i], p);
+                printf("[expr %zu] = %lld\n", i, lastRes);
+			}
+            return lastRes;
         }
 
 		case EXPR_CONDITIONAL: {
 			int64_t res = eval(e->as.conditional.condition, p);
+			int64_t lastRes;
 			if (res) {
-				eval(e->as.conditional.thenBranch, p);
+				lastRes = eval(e->as.conditional.thenBranch, p);
 			} else {
-				if (e->as.conditional.elseBranch) eval(e->as.conditional.elseBranch, p);
+				if (e->as.conditional.elseBranch) {
+					lastRes = eval(e->as.conditional.elseBranch, p);
+				}
 			}
-			return 0;
+			return lastRes;
 		}
 
         case EXPR_VAR_DECL: {
@@ -113,6 +118,12 @@ int64_t eval(Expr* e, Parser* p) {
 
         case EXPR_VAR_READ:
             return p->env.items[e->as.varRead.slot];
+
+		case EXPR_VAR_ASSIGN: {
+			int64_t val = eval(e->as.varAssign.newValue, p);
+            da_at(&p->env, val, e->as.varAssign.slot);
+            return val;
+		}
     }
     return 0;
 }

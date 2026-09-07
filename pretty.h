@@ -26,6 +26,9 @@ static inline Kids exprKids(Expr* e, Expr* buf[3]) {
         case EXPR_VAR_DECL:
             buf[0] = e->as.varDecl.value;
             return (Kids){buf, 1};
+        case EXPR_VAR_ASSIGN:
+            buf[0] = e->as.varAssign.newValue;
+            return (Kids){buf, 1};
         case EXPR_BINARY:
             buf[0] = e->as.binary.left;
             buf[1] = e->as.binary.right;
@@ -53,6 +56,9 @@ static inline const char* exprLabel(Expr* e, Parser* p, char* buf, size_t n) {
             return buf;
         case EXPR_VAR_DECL:
             snprintf(buf, n, "let %s", slotName(p, e->as.varDecl.slot));
+            return buf;
+        case EXPR_VAR_ASSIGN:
+            snprintf(buf, n, "set %s", slotName(p, e->as.varAssign.slot));
             return buf;
         case EXPR_VAR_READ:  return slotName(p, e->as.varRead.slot);
         case EXPR_UNARY:     return tokenLexeme(e->as.unary.op);
