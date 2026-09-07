@@ -25,7 +25,7 @@ static inline int64_t scopeResolve(Parser* p, Token t) {
     memcpy(buf, p->source + t.start, t.length);
     buf[t.length] = '\0';
 
-    for (int i = p->symbolList.count - 1; i >= 0; --i) {
+    for (int64_t i = p->symbolList.count - 1; i >= 0; --i) {
         if (p->symbolList.items[i].length == t.length && strncmp(p->symbolList.items[i].name, buf, t.length) == 0) {
             return p->symbolList.items[i].slot;
         }

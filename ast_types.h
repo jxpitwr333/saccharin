@@ -64,8 +64,8 @@ typedef struct {
 
 typedef struct {
     Symbol* items;
-    size_t capacity;
-    size_t count;
+    int64_t capacity;
+    int64_t count;
 } SymbolList;
 
 #endif

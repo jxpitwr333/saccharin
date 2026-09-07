@@ -49,7 +49,7 @@ bool tokConsume(Parser* p, TokenKind t, const char* s, bool msg) {
         tokAdvance(p);
         return true;
     }
-    if (msg) printf("Expected '%s' at line '%zu'", s, p->line);
+    if (msg) printf("Expected '%s' at line '%zu'\n", s, tokPeek(p).line);
     return false;
 }
 

@@ -67,6 +67,7 @@ Expr* parsePrimary(Parser* p) {
             int64_t slot = scopeResolve(p, t);
             if (slot < 0) {
                 fprintf(stderr, "Undeclared identifier '%.*s' at line '%zu'\n", (int)t.length, p->source + t.start, p->line);
+				return makeNumber(p, 0);
             }
 
             return makeRead(p, slot);

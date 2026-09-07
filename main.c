@@ -96,9 +96,8 @@ int main(void) {
 					buf[length] = '\0';
 
 					TokenKind type = TOKEN_IDENTIFIER;
-					Value out = NIL_VAL;
-					tableGet(&keywords, buf, &out);
-					type = out.as.integer;
+					Value out;
+					if (tableGet(&keywords, buf, &out)) type = (TokenKind)out.as.integer;
 
 					addToken(&lex, type);
 				} else {
@@ -134,10 +133,11 @@ int main(void) {
         printf("block result = %lld", (long long)result);
 	}
 
+	da_free(&parser.env);
     da_free(&parser.symbolList);
     arenaFree(&parser.strArena);
     arenaFree(&parser.astArena);
-	free(lex.tokens.items);
+	da_free(&lex.tokens);
 	free(lex.source);
 	freeTable(&keywords);
 
