@@ -38,7 +38,7 @@ Expr* parsePrimary(Parser* p) {
 
             ExprList exprs = {0};
             exprs.items = NULL;
-            while (tokPeek(p).kind != TOKEN_RIGHT_BRACE) {
+            while (tokPeek(p).kind != TOKEN_RIGHT_BRACE && tokPeek(p).kind != TOKEN_EOF) {
                 Expr* expr = parseExpr(p, 0);
                 da_append(&exprs, expr);
 
@@ -73,9 +73,8 @@ Expr* parsePrimary(Parser* p) {
 
             tokConsume(p, TOKEN_EQUAL, "=", true);
             Expr* initializer = parseExpr(p, 0);
-            int64_t slot = scopeDecl(p, name);
 
-            return makeDecl(p, slot, initializer);
+            return makeDecl(p, scopeDecl(p, name), initializer);
         }
         case TOKEN_IDENTIFIER: {
 			// this is a function
@@ -96,6 +95,7 @@ Expr* parsePrimary(Parser* p) {
 
 				if (args.count != p->functionList.items[index].paramCount) {
 					fprintf(stderr, "'%.*s' expects %zu arguments, got %zu\n", (int)t.length, p->source + t.start, p->functionList.items[index].paramCount, args.count);
+					return makeNumber(p, 0);
 				}
 
 				Expr* call = makeCall(p, index, args.items, args.count);
@@ -104,18 +104,18 @@ Expr* parsePrimary(Parser* p) {
 			}
 
 			// this is a variable
-            int64_t slot = scopeResolve(p, t);
+            int64_t sym = scopeResolve(p, t);
 
-			if (slot < 0) {
-				fprintf(stderr, "Undeclared identifier '%.*s' at line '%zu'\n", (int)t.length, p->source + t.start, p->line);
+			if (sym < 0) {
+				fprintf(stderr, "Undeclared identifier '%.*s' at line '%zu'\n", (int)t.length, p->source + t.start, t.line);
 				return makeNumber(p, 0);
 			}
 
 			if (tokConsume(p, TOKEN_EQUAL, "=", false)) {
 				Expr* newVal = parseExpr(p, 0);
-				return makeAssign(p, slot, newVal);
+				return makeAssign(p, sym, newVal);
 			} else {
-				return makeRead(p, slot);
+				return makeRead(p, sym);
 			}
         }
 		case TOKEN_FUN: {
@@ -139,8 +139,9 @@ Expr* parsePrimary(Parser* p) {
 			int64_t saved = p->functionBase;
 			int64_t savedMax = p->maxSlot;
 			int64_t mark = scopeBegin(p);
-			p->functionBase = p->symbolList.count;
+			p->functionBase = p->scope.count;
 			p->maxSlot = 0;
+			p->functionDepth++;
 
 			size_t paramCount = 0;
 			while (tokPeek(p).kind != TOKEN_RIGHT_PAREN && tokPeek(p).kind != TOKEN_EOF) {
@@ -162,6 +163,7 @@ Expr* parsePrimary(Parser* p) {
 			scopeEnd(p, mark);
 			p->functionBase = saved;
 			p->maxSlot = savedMax;
+			p->functionDepth--;
 
 			return makeFunction(p, index, body);
 		}
@@ -227,25 +229,25 @@ Expr* makeConditional(Parser* p, Expr* condition, Expr* thenBranch, Expr* elseBr
     return e;
 }
 
-Expr* makeDecl(Parser* p, int64_t slot, Expr* initializer) {
+Expr* makeDecl(Parser* p, int64_t sym, Expr* initializer) {
     Expr* e = exprAlloc(p);
     e->kind = EXPR_VAR_DECL;
-    e->as.varDecl.slot = slot;
+    e->as.varDecl.sym = sym;
     e->as.varDecl.value = initializer;
     return e;
 }
 
-Expr* makeRead(Parser* p, int64_t slot) {
+Expr* makeRead(Parser* p, int64_t sym) {
     Expr* e = exprAlloc(p);
     e->kind = EXPR_VAR_READ;
-    e->as.varRead.slot = slot;
+    e->as.varRead.sym = sym;
     return e;
 }
 
-Expr* makeAssign(Parser* p, int64_t slot, Expr* newValue) {
+Expr* makeAssign(Parser* p, int64_t sym, Expr* newValue) {
 	Expr* e = exprAlloc(p);
     e->kind = EXPR_VAR_ASSIGN;
-    e->as.varAssign.slot = slot;
+    e->as.varAssign.sym = sym;
 	e->as.varAssign.newValue = newValue;
     return e;
 }

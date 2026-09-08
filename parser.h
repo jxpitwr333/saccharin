@@ -35,6 +35,7 @@ typedef struct {
 
 struct Parser {
     SymbolList symbolList;
+	ScopeStack scope;
 	FunctionList functionList;
 	int64_t maxSlot;
     Environment env;
@@ -45,6 +46,7 @@ struct Parser {
 	size_t current;
 	size_t line;
 	int64_t functionBase;
+	int64_t functionDepth;
 	int64_t frameTop;
 	int64_t frameBase;
 };

@@ -8,35 +8,45 @@
     #include <string.h>
 #endif
 
+static inline bool symbolMatches(Parser* p, int64_t sym, Token t) {
+    return p->symbolList.items[sym].length == t.length &&
+		strncmp(p->symbolList.items[sym].name, p->source + t.start, t.length) == 0;
+}
+
 static inline int64_t scopeDecl(Parser* p, Token t) {
-    int64_t slot = p->symbolList.count - p->functionBase;
+    int64_t slot = p->scope.count - p->functionBase;
     if (slot + 1 > p->maxSlot) p->maxSlot = slot + 1;
 
     char* buf = arenaAlloc(&p->strArena, t.length + 1);
     memcpy(buf, p->source + t.start, t.length);
     buf[t.length] = '\0';
 
-    Symbol s = (Symbol){ buf, t.length, slot };
+    int64_t sym = p->symbolList.count;
+    Symbol s = (Symbol){ buf, t.length, slot, p->functionDepth == 0 };
     da_append(&p->symbolList, s);
-    return slot;
+    da_append(&p->scope, sym);
+    return sym;
 }
 
 static inline int64_t scopeResolve(Parser* p, Token t) {
-    for (int64_t i = p->symbolList.count - 1; i >= 0; --i) {
-        if (p->symbolList.items[i].length == t.length &&
-			strncmp(p->symbolList.items[i].name, p->source + t.start, t.length) == 0) {
-            return p->symbolList.items[i].slot;
-        }
+    for (int64_t i = p->scope.count - 1; i >= p->functionBase; --i) {
+        if (symbolMatches(p, p->scope.items[i], t)) return p->scope.items[i];
     }
+
+    for (int64_t i = p->functionBase - 1; i >= 0; --i) {
+        int64_t sym = p->scope.items[i];
+        if (p->symbolList.items[sym].isGlobal && symbolMatches(p, sym, t)) return sym;
+    }
+
     return -1;
 }
 
 static inline int64_t scopeBegin(Parser* p) {
-    return p->symbolList.count;
+    return p->scope.count;
 }
 
 static inline void scopeEnd(Parser* p, int64_t mark) {
-    p->symbolList.count = mark;
+    p->scope.count = mark;
 }
 
 #endif //SCOPE_H

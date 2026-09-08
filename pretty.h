@@ -44,9 +44,9 @@ static inline Kids exprKids(Expr* e, Expr* buf[3]) {
     return (Kids){NULL, 0};
 }
 
-static inline const char* slotName(Parser* p, int64_t slot) {
-    if (slot < 0 || slot >= p->symbolList.count) return "<?>";
-    return p->symbolList.items[slot].name;
+static inline const char* symName(Parser* p, int64_t sym) {
+    if (sym < 0 || sym >= p->symbolList.count) return "<?>";
+    return p->symbolList.items[sym].name;
 }
 
 static inline const char* exprLabel(Expr* e, Parser* p, char* buf, size_t n) {
@@ -55,12 +55,12 @@ static inline const char* exprLabel(Expr* e, Parser* p, char* buf, size_t n) {
             snprintf(buf, n, "%lld", (long long)e->as.number);
             return buf;
         case EXPR_VAR_DECL:
-            snprintf(buf, n, "let %s", slotName(p, e->as.varDecl.slot));
+            snprintf(buf, n, "let %s", symName(p, e->as.varDecl.sym));
             return buf;
         case EXPR_VAR_ASSIGN:
-            snprintf(buf, n, "set %s", slotName(p, e->as.varAssign.slot));
+            snprintf(buf, n, "set %s", symName(p, e->as.varAssign.sym));
             return buf;
-        case EXPR_VAR_READ:  return slotName(p, e->as.varRead.slot);
+        case EXPR_VAR_READ:  return symName(p, e->as.varRead.sym);
         case EXPR_UNARY:     return tokenLexeme(e->as.unary.op);
         case EXPR_BINARY:    return tokenLexeme(e->as.binary.op);
         case EXPR_BLOCK:     return "block";

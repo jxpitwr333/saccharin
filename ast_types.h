@@ -4,6 +4,7 @@
 #ifndef UNITY_BUILD
     #include <stddef.h>
     #include <stdint.h>
+    #include <stdbool.h>
 #endif
 
 typedef struct Parser Parser;
@@ -69,6 +70,7 @@ typedef struct {
     const char* name;
     size_t length;
     int64_t slot;
+    bool isGlobal;
 } Symbol;
 
 typedef struct {
@@ -76,5 +78,11 @@ typedef struct {
     int64_t capacity;
     int64_t count;
 } SymbolList;
+
+typedef struct {
+    int64_t* items;
+    int64_t capacity;
+    int64_t count;
+} ScopeStack;
 
 #endif

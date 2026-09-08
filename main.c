@@ -19,8 +19,8 @@
 #include "macros.h"
 #include "token.h"
 #include "expr.h"
-#include "scope.h"
 #include "parser.h"
+#include "scope.h"
 #include "pretty.h"
 
 #include "token.c"
@@ -143,6 +143,7 @@ int main(void) {
 
 	da_free(&parser.env);
     da_free(&parser.symbolList);
+	da_free(&parser.scope);
     arenaFree(&parser.strArena);
     arenaFree(&parser.astArena);
 	da_free(&lex.tokens);

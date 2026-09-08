@@ -58,6 +58,11 @@ bool tokConsume(Parser* p, TokenKind t, const char* s, bool msg) {
     return false;
 }
 
+static inline int64_t varAddr(Parser* p, int64_t sym) {
+	Symbol* s = &p->symbolList.items[sym];
+	return s->isGlobal ? s->slot : p->frameBase + s->slot;
+}
+
 int64_t eval(Expr* e, Parser* p) {
     if (!e) return 0;
 
@@ -127,16 +132,16 @@ int64_t eval(Expr* e, Parser* p) {
 
         case EXPR_VAR_DECL: {
             int64_t val = eval(e->as.varDecl.value, p);
-            da_at(&p->env, val, p->frameBase + e->as.varDecl.slot);
+            da_at(&p->env, val, varAddr(p, e->as.varDecl.sym));
             return val;
         }
 
         case EXPR_VAR_READ:
-            return p->env.items[p->frameBase + e->as.varRead.slot];
+            return p->env.items[varAddr(p, e->as.varRead.sym)];
 
 		case EXPR_VAR_ASSIGN: {
 			int64_t val = eval(e->as.varAssign.newValue, p);
-            da_at(&p->env, val, p->frameBase + e->as.varAssign.slot);
+            da_at(&p->env, val, varAddr(p, e->as.varAssign.sym));
             return val;
 		}
 
