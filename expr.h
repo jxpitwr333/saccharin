@@ -47,6 +47,17 @@ struct Expr {
 		    int64_t slot;
 			Expr* newValue;
 		} varAssign;
+
+		struct {
+			int64_t index;
+			Expr* body;
+		} function;
+
+		struct {
+			int64_t index;
+			Expr** args;
+			size_t count;
+		} call;
 	} as;
 };
 
@@ -66,5 +77,10 @@ Expr* makeConditional(Parser* p, Expr* condition, Expr* thenBranch, Expr* elseBr
 Expr* makeDecl(Parser* p, int64_t slot, Expr* initializer);
 Expr* makeRead(Parser* p, int64_t slot);
 Expr* makeAssign(Parser* p, int64_t slot, Expr* newValue);
+Expr* makeFunction(Parser* p, int64_t index, Expr* body);
+Expr* makeCall(Parser* p, int64_t index, Expr** args, size_t argCount);
+Expr* makeLogical(Parser* p, Expr* left, Expr* right, TokenKind op);
+Expr* makeInfix(Parser* p, Expr* left, Expr* right, TokenKind op);
+
 
 #endif

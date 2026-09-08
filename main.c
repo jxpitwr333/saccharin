@@ -69,6 +69,7 @@ int main(void) {
 			case '*': addToken(&lex, TOKEN_STAR); break;
 			case '/': addToken(&lex, TOKEN_SLASH); break;
 			case ';': addToken(&lex, TOKEN_SEMICOLON); break;
+			case ',': addToken(&lex, TOKEN_COMMA); break;
 
 			case '!': addToken(&lex, match(&lex, '=') ? TOKEN_BANG_EQUAL : TOKEN_BANG); break;
 			case '=': addToken(&lex, match(&lex, '=') ? TOKEN_EQUAL_EQUAL : TOKEN_EQUAL); break;
@@ -124,10 +125,14 @@ int main(void) {
 	};
 
 	Expr* ast = NULL;
+	
 	while (!parserIsAtEnd(&parser)) {
 		ast = parseExpr(&parser, 0);
 
 		tokConsume(&parser, TOKEN_SEMICOLON, ";", false);
+
+		parser.frameBase = 0;
+		parser.frameTop  = parser.maxSlot;
 
         printf("--- AST ---\n");
 		printAst(ast, &parser);

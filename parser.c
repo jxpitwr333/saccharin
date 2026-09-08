@@ -1,5 +1,6 @@
-#include "macros.h"
 #ifndef UNITY_BUILD
+	#include "macros.h"
+	#include <stdint.h>
     #include "ast_types.h"
     #include "parser.h"
     #include "expr.h"
@@ -8,20 +9,24 @@
 
 int precedenceOf(TokenKind kind) {
 	switch(kind) {
+		case TOKEN_OR:
+			return 1;
+		case TOKEN_AND:
+			return 2;
 		case TOKEN_EQUAL_EQUAL:
 		case TOKEN_BANG_EQUAL:
-			return 1;
+			return 3;
 		case TOKEN_LESS:
 		case TOKEN_LESS_EQUAL:
 		case TOKEN_GREATER:
 		case TOKEN_GREATER_EQUAL:
-		     return 2;
+		     return 4;
 		case TOKEN_MINUS:
 		case TOKEN_PLUS:
-		    return 3;
+		    return 5;
 		case TOKEN_STAR:
 		case TOKEN_SLASH:
-			return 4;
+			return 6;
 		default:
 			return 0;
 	}
@@ -65,6 +70,7 @@ int64_t eval(Expr* e, Parser* p) {
 
             switch (e->as.unary.op) {
                 case TOKEN_MINUS: return -val;
+				case TOKEN_BANG: return !val;
                 default: return 0;
             }
         }
@@ -88,18 +94,27 @@ int64_t eval(Expr* e, Parser* p) {
             }
         }
 
+		case EXPR_LOGICAL: {
+			int64_t left = eval(e->as.binary.left, p);
+
+			switch (e->as.binary.op) {
+				case TOKEN_AND: return left ? (eval(e->as.binary.right, p) != 0) : 0;
+				case TOKEN_OR: return left ? 1 : (eval(e->as.binary.right, p) != 0);
+				default: return 0;
+			}
+		}
+
         case EXPR_BLOCK: {
-			int64_t lastRes;
+			int64_t lastRes = 0;
             for (size_t i = 0; i < e->as.block.count; ++i) {
 				lastRes = (long long)eval(e->as.block.expressions[i], p);
-                printf("[expr %zu] = %lld\n", i, lastRes);
 			}
             return lastRes;
         }
 
 		case EXPR_CONDITIONAL: {
 			int64_t res = eval(e->as.conditional.condition, p);
-			int64_t lastRes;
+			int64_t lastRes = 0;
 			if (res) {
 				lastRes = eval(e->as.conditional.thenBranch, p);
 			} else {
@@ -112,18 +127,49 @@ int64_t eval(Expr* e, Parser* p) {
 
         case EXPR_VAR_DECL: {
             int64_t val = eval(e->as.varDecl.value, p);
-            da_at(&p->env, val, e->as.varDecl.slot);
+            da_at(&p->env, val, p->frameBase + e->as.varDecl.slot);
             return val;
         }
 
         case EXPR_VAR_READ:
-            return p->env.items[e->as.varRead.slot];
+            return p->env.items[p->frameBase + e->as.varRead.slot];
 
 		case EXPR_VAR_ASSIGN: {
 			int64_t val = eval(e->as.varAssign.newValue, p);
-            da_at(&p->env, val, e->as.varAssign.slot);
+            da_at(&p->env, val, p->frameBase + e->as.varAssign.slot);
             return val;
+		}
+
+		case EXPR_FUN: return 0;
+
+		case EXPR_CALL: {
+			Function* fn = &p->functionList.items[e->as.call.index];
+			int64_t newBase = p->frameTop;
+			for (size_t i = 0; i < e->as.call.count; ++i) {
+				int64_t v = eval(e->as.call.args[i], p);
+				da_at(&p->env, v, newBase + i);
+			}
+
+			int64_t savedBase = p->frameBase;
+			int64_t savedTop = p->frameTop;
+			p->frameBase = newBase;
+			p->frameTop = newBase + fn->localCount;
+
+			int64_t result = eval(fn->body, p);
+			p->frameBase = savedBase;
+			p->frameTop = savedTop;
+			return result;
 		}
     }
     return 0;
+}
+
+int64_t functionResolve(Parser* p, Token t) {
+    for (int64_t i = p->functionList.count - 1; i >= 0; --i) {
+        if (p->functionList.items[i].length == t.length &&
+			strncmp(p->functionList.items[i].name, p->source + t.start, t.length) == 0) {
+            return i;
+        }
+    }
+    return -1;
 }

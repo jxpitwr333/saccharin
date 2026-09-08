@@ -17,9 +17,11 @@ typedef enum {
 	EXPR_BLOCK,
 	EXPR_CONDITIONAL,
 	EXPR_FUN,
+	EXPR_CALL,
 	EXPR_VAR_DECL,
 	EXPR_VAR_READ,
-	EXPR_VAR_ASSIGN
+	EXPR_VAR_ASSIGN,
+	EXPR_LOGICAL
 } ExprKind;
 
 #define TOKEN_LIST(X)\
@@ -54,6 +56,7 @@ typedef enum {
 	X(TOKEN_RETURN, "return")\
 	X(TOKEN_WHILE, "while")\
 	X(TOKEN_LET, "let")\
+	X(TOKEN_COMMA, ",")\
 	X(TOKEN_EOF, "<eof>")
 
 typedef enum {
