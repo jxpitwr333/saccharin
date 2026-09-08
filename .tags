@@ -82,68 +82,48 @@ CC	Makefile	/^CC ?= gcc$/;"	m
 CFLAGS	Makefile	/^CFLAGS ?= -std=c99 -Wall -Wextra -DUNITY_BUILD$/;"	m
 EXPR_BINARY	ast_types.h	/^	EXPR_BINARY,$/;"	e	enum:__anonbce2a1170103
 EXPR_BLOCK	ast_types.h	/^	EXPR_BLOCK,$/;"	e	enum:__anonbce2a1170103
+EXPR_CALL	ast_types.h	/^	EXPR_CALL,$/;"	e	enum:__anonbce2a1170103
 EXPR_CONDITIONAL	ast_types.h	/^	EXPR_CONDITIONAL,$/;"	e	enum:__anonbce2a1170103
 EXPR_FUN	ast_types.h	/^	EXPR_FUN,$/;"	e	enum:__anonbce2a1170103
 EXPR_H	expr.h	/^#define EXPR_H$/;"	d
+EXPR_LOGICAL	ast_types.h	/^	EXPR_LOGICAL$/;"	e	enum:__anonbce2a1170103
 EXPR_NUMBER	ast_types.h	/^	EXPR_NUMBER,$/;"	e	enum:__anonbce2a1170103
 EXPR_UNARY	ast_types.h	/^	EXPR_UNARY,$/;"	e	enum:__anonbce2a1170103
+EXPR_VAR_ASSIGN	ast_types.h	/^	EXPR_VAR_ASSIGN,$/;"	e	enum:__anonbce2a1170103
 EXPR_VAR_DECL	ast_types.h	/^	EXPR_VAR_DECL,$/;"	e	enum:__anonbce2a1170103
-EXPR_VAR_READ	ast_types.h	/^	EXPR_VAR_READ$/;"	e	enum:__anonbce2a1170103
+EXPR_VAR_READ	ast_types.h	/^	EXPR_VAR_READ,$/;"	e	enum:__anonbce2a1170103
 Entry	hashmap.h	/^} Entry;$/;"	t	typeref:struct:__anon58896add0408
+Environment	parser.h	/^} Environment;$/;"	t	typeref:struct:__anon1597d8c80108
 Expr	ast_types.h	/^typedef struct Expr Expr;$/;"	t	typeref:struct:Expr
 Expr	expr.h	/^struct Expr {$/;"	s
 ExprKind	ast_types.h	/^} ExprKind;$/;"	t	typeref:enum:__anonbce2a1170103
-ExprList	expr.h	/^} ExprList;$/;"	t	typeref:struct:__anonfc32de7a0808
+ExprList	expr.h	/^} ExprList;$/;"	t	typeref:struct:__anonfc32de7a0b08
 FILE_H	file.h	/^#define FILE_H$/;"	d
 FILE_IMPL	main.c	/^#define FILE_IMPL$/;"	d	file:
+Function	parser.h	/^} Function;$/;"	t	typeref:struct:__anon1597d8c80208
+FunctionList	parser.h	/^} FunctionList;$/;"	t	typeref:struct:__anon1597d8c80308
 HASHMAP_H	hashmap.h	/^#define HASHMAP_H$/;"	d
 HASH_IMPL	main.c	/^#define HASH_IMPL$/;"	d	file:
 INT_VAL	hashmap.h	/^#define INT_VAL(/;"	d
+Kids	pretty.h	/^} Kids;$/;"	t	typeref:struct:__anon13fd41630108
 Lexer	token.h	/^} Lexer;$/;"	t	typeref:struct:__anonefd93d1c0208
 MACROS_H	macros.h	/^#define MACROS_H$/;"	d
 MB	macros.h	/^#define MB /;"	d
 NIL_VAL	hashmap.h	/^#define NIL_VAL /;"	d
 PARSER_H	parser.h	/^#define PARSER_H$/;"	d
+PREC_UNARY	parser.h	/^#define PREC_UNARY /;"	d
+PRETTY_H	pretty.h	/^#define PRETTY_H$/;"	d
 Parser	ast_types.h	/^typedef struct Parser Parser;$/;"	t	typeref:struct:Parser
 Parser	parser.h	/^struct Parser {$/;"	s
 SCOPE_H	scope.h	/^#define SCOPE_H$/;"	d
 STR_VAL	hashmap.h	/^#define STR_VAL(/;"	d
+ScopeStack	ast_types.h	/^} ScopeStack;$/;"	t	typeref:struct:__anonbce2a1170508
 Symbol	ast_types.h	/^} Symbol;$/;"	t	typeref:struct:__anonbce2a1170308
 SymbolList	ast_types.h	/^} SymbolList;$/;"	t	typeref:struct:__anonbce2a1170408
 TABLE_MAX_LOAD	hashmap.h	/^#define TABLE_MAX_LOAD /;"	d
-TOKEN_AND	ast_types.h	/^	TOKEN_AND,$/;"	e	enum:__anonbce2a1170203
-TOKEN_BANG	ast_types.h	/^	TOKEN_BANG,$/;"	e	enum:__anonbce2a1170203
-TOKEN_BANG_EQUAL	ast_types.h	/^	TOKEN_BANG_EQUAL, \/\/ !=$/;"	e	enum:__anonbce2a1170203
-TOKEN_ELSE	ast_types.h	/^	TOKEN_ELSE,$/;"	e	enum:__anonbce2a1170203
-TOKEN_EOF	ast_types.h	/^	TOKEN_EOF$/;"	e	enum:__anonbce2a1170203
-TOKEN_EQUAL	ast_types.h	/^	TOKEN_EQUAL, \/\/ =$/;"	e	enum:__anonbce2a1170203
-TOKEN_EQUAL_EQUAL	ast_types.h	/^	TOKEN_EQUAL_EQUAL, \/\/ ==$/;"	e	enum:__anonbce2a1170203
-TOKEN_FALSE	ast_types.h	/^    TOKEN_FALSE,$/;"	e	enum:__anonbce2a1170203
-TOKEN_FOR	ast_types.h	/^    TOKEN_FOR,$/;"	e	enum:__anonbce2a1170203
-TOKEN_FUN	ast_types.h	/^    TOKEN_FUN,$/;"	e	enum:__anonbce2a1170203
-TOKEN_GREATER	ast_types.h	/^	TOKEN_GREATER, \/\/ >$/;"	e	enum:__anonbce2a1170203
-TOKEN_GREATER_EQUAL	ast_types.h	/^	TOKEN_GREATER_EQUAL, \/\/ >=$/;"	e	enum:__anonbce2a1170203
 TOKEN_H	token.h	/^#define TOKEN_H$/;"	d
-TOKEN_IDENTIFIER	ast_types.h	/^	TOKEN_IDENTIFIER,$/;"	e	enum:__anonbce2a1170203
-TOKEN_IF	ast_types.h	/^	TOKEN_IF,$/;"	e	enum:__anonbce2a1170203
-TOKEN_LEFT_BRACE	ast_types.h	/^    TOKEN_LEFT_BRACE,$/;"	e	enum:__anonbce2a1170203
-TOKEN_LEFT_PAREN	ast_types.h	/^	TOKEN_LEFT_PAREN,$/;"	e	enum:__anonbce2a1170203
-TOKEN_LESS	ast_types.h	/^	TOKEN_LESS, \/\/ <$/;"	e	enum:__anonbce2a1170203
-TOKEN_LESS_EQUAL	ast_types.h	/^	TOKEN_LESS_EQUAL, \/\/ <=$/;"	e	enum:__anonbce2a1170203
-TOKEN_LET	ast_types.h	/^    TOKEN_LET,$/;"	e	enum:__anonbce2a1170203
-TOKEN_MINUS	ast_types.h	/^	TOKEN_MINUS,$/;"	e	enum:__anonbce2a1170203
-TOKEN_NONE	ast_types.h	/^	TOKEN_NONE,$/;"	e	enum:__anonbce2a1170203
-TOKEN_NUMBER_LITERAL	ast_types.h	/^	TOKEN_NUMBER_LITERAL,$/;"	e	enum:__anonbce2a1170203
-TOKEN_OR	ast_types.h	/^	TOKEN_OR,$/;"	e	enum:__anonbce2a1170203
-TOKEN_PLUS	ast_types.h	/^	TOKEN_PLUS,$/;"	e	enum:__anonbce2a1170203
-TOKEN_RETURN	ast_types.h	/^    TOKEN_RETURN,$/;"	e	enum:__anonbce2a1170203
-TOKEN_RIGHT_BRACE	ast_types.h	/^    TOKEN_RIGHT_BRACE,$/;"	e	enum:__anonbce2a1170203
-TOKEN_RIGHT_PAREN	ast_types.h	/^	TOKEN_RIGHT_PAREN,$/;"	e	enum:__anonbce2a1170203
-TOKEN_SEMICOLON	ast_types.h	/^	TOKEN_SEMICOLON,$/;"	e	enum:__anonbce2a1170203
-TOKEN_SLASH	ast_types.h	/^	TOKEN_SLASH,$/;"	e	enum:__anonbce2a1170203
-TOKEN_STAR	ast_types.h	/^	TOKEN_STAR,$/;"	e	enum:__anonbce2a1170203
-TOKEN_TRUE	ast_types.h	/^    TOKEN_TRUE,$/;"	e	enum:__anonbce2a1170203
-TOKEN_WHILE	ast_types.h	/^    TOKEN_WHILE,$/;"	e	enum:__anonbce2a1170203
+TOKEN_LIST	ast_types.h	/^	TOKEN_LIST(X)$/;"	e	enum:__anonbce2a1170203
+TOKEN_LIST	ast_types.h	/^#define TOKEN_LIST(/;"	d
 Table	hashmap.h	/^} Table;$/;"	t	typeref:struct:__anon58896add0508
 Token	ast_types.h	/^typedef struct Token Token;$/;"	t	typeref:struct:Token
 Token	token.h	/^struct Token {$/;"	s
@@ -154,6 +134,12 @@ VALUE_NIL	hashmap.h	/^    VALUE_NIL,$/;"	e	enum:__anon58896add0103
 VALUE_STRING	hashmap.h	/^    VALUE_STRING,$/;"	e	enum:__anon58896add0103
 Value	hashmap.h	/^} Value;$/;"	t	typeref:struct:__anon58896add0208
 ValueKind	hashmap.h	/^} ValueKind;$/;"	t	typeref:enum:__anon58896add0103
+X	ast_types.h	/^#define X(/;"	d
+X	token.h	/^#define X(/;"	d
+__anon13fd41630108	pretty.h	/^typedef struct {$/;"	s
+__anon1597d8c80108	parser.h	/^typedef struct {$/;"	s
+__anon1597d8c80208	parser.h	/^typedef struct {$/;"	s
+__anon1597d8c80308	parser.h	/^typedef struct {$/;"	s
 __anon3fde59c20108	arena.h	/^typedef struct {$/;"	s
 __anon58896add0103	hashmap.h	/^typedef enum {$/;"	g
 __anon58896add0208	hashmap.h	/^typedef struct {$/;"	s
@@ -164,6 +150,7 @@ __anonbce2a1170103	ast_types.h	/^typedef enum {$/;"	g
 __anonbce2a1170203	ast_types.h	/^typedef enum {$/;"	g
 __anonbce2a1170308	ast_types.h	/^typedef struct {$/;"	s
 __anonbce2a1170408	ast_types.h	/^typedef struct {$/;"	s
+__anonbce2a1170508	ast_types.h	/^typedef struct {$/;"	s
 __anonefd93d1c0108	token.h	/^typedef struct {$/;"	s
 __anonefd93d1c0208	token.h	/^typedef struct {$/;"	s
 __anonfc32de7a010a	expr.h	/^	union {$/;"	u	struct:Expr
@@ -173,52 +160,85 @@ __anonfc32de7a0408	expr.h	/^		struct {$/;"	s	union:Expr::__anonfc32de7a010a
 __anonfc32de7a0508	expr.h	/^		struct {$/;"	s	union:Expr::__anonfc32de7a010a
 __anonfc32de7a0608	expr.h	/^		struct {$/;"	s	union:Expr::__anonfc32de7a010a
 __anonfc32de7a0708	expr.h	/^		struct {$/;"	s	union:Expr::__anonfc32de7a010a
-__anonfc32de7a0808	expr.h	/^typedef struct {$/;"	s
+__anonfc32de7a0808	expr.h	/^		struct {$/;"	s	union:Expr::__anonfc32de7a010a
+__anonfc32de7a0908	expr.h	/^		struct {$/;"	s	union:Expr::__anonfc32de7a010a
+__anonfc32de7a0a08	expr.h	/^		struct {$/;"	s	union:Expr::__anonfc32de7a010a
+__anonfc32de7a0b08	expr.h	/^typedef struct {$/;"	s
 addToken	token.c	/^void addToken(Lexer* l, TokenKind kind) {$/;"	f	typeref:typename:void
 adjustCapacity	hashmap.h	/^static void adjustCapacity(Table* table, size_t capacity) {$/;"	f	typeref:typename:void
 advance	token.c	/^char advance(Lexer* l) {$/;"	f	typeref:typename:char
 arenaAlloc	arena.h	/^void* arenaAlloc(Arena* a, size_t size) {$/;"	f	typeref:typename:void *
 arenaFree	arena.h	/^void arenaFree(Arena* a) {$/;"	f	typeref:typename:void
 arenaInit	arena.h	/^Arena arenaInit(size_t capacity) {$/;"	f	typeref:typename:Arena
+args	expr.h	/^			Expr** args;$/;"	m	struct:Expr::__anonfc32de7a010a::__anonfc32de7a0a08	typeref:typename:Expr **
 as	expr.h	/^	} as;$/;"	m	struct:Expr	typeref:union:Expr::__anonfc32de7a010a
 as	hashmap.h	/^    } as;$/;"	m	struct:__anon58896add0208	typeref:union:__anon58896add0208::__anon58896add030a
 astArena	parser.h	/^	Arena astArena;$/;"	m	struct:Parser	typeref:typename:Arena
 binary	expr.h	/^		} binary;$/;"	m	union:Expr::__anonfc32de7a010a	typeref:struct:Expr::__anonfc32de7a010a::__anonfc32de7a0208
 block	expr.h	/^		} block;$/;"	m	union:Expr::__anonfc32de7a010a	typeref:struct:Expr::__anonfc32de7a010a::__anonfc32de7a0408
+body	expr.h	/^			Expr* body;$/;"	m	struct:Expr::__anonfc32de7a010a::__anonfc32de7a0908	typeref:typename:Expr *
+body	parser.h	/^	Expr* body;$/;"	m	struct:__anon1597d8c80208	typeref:typename:Expr *
+call	expr.h	/^		} call;$/;"	m	union:Expr::__anonfc32de7a010a	typeref:struct:Expr::__anonfc32de7a010a::__anonfc32de7a0a08
 capacity	arena.h	/^	size_t capacity;$/;"	m	struct:__anon3fde59c20108	typeref:typename:size_t
-capacity	ast_types.h	/^    size_t capacity;$/;"	m	struct:__anonbce2a1170408	typeref:typename:size_t
-capacity	expr.h	/^    size_t capacity;$/;"	m	struct:__anonfc32de7a0808	typeref:typename:size_t
+capacity	ast_types.h	/^    int64_t capacity;$/;"	m	struct:__anonbce2a1170408	typeref:typename:int64_t
+capacity	ast_types.h	/^    int64_t capacity;$/;"	m	struct:__anonbce2a1170508	typeref:typename:int64_t
+capacity	expr.h	/^    size_t capacity;$/;"	m	struct:__anonfc32de7a0b08	typeref:typename:size_t
 capacity	hashmap.h	/^    size_t capacity;$/;"	m	struct:__anon58896add0508	typeref:typename:size_t
+capacity	parser.h	/^	size_t capacity;$/;"	m	struct:__anon1597d8c80308	typeref:typename:size_t
+capacity	parser.h	/^    size_t capacity;$/;"	m	struct:__anon1597d8c80108	typeref:typename:size_t
 capacity	token.h	/^	size_t capacity;$/;"	m	struct:__anonefd93d1c0108	typeref:typename:size_t
 clangd	.zed/settings.json	/^    "clangd": {$/;"	o	object:lsp
 clean	Makefile	/^clean:$/;"	t
 condition	expr.h	/^		    Expr* condition;$/;"	m	struct:Expr::__anonfc32de7a010a::__anonfc32de7a0508	typeref:typename:Expr *
 conditional	expr.h	/^		} conditional;$/;"	m	union:Expr::__anonfc32de7a010a	typeref:struct:Expr::__anonfc32de7a010a::__anonfc32de7a0508
-count	ast_types.h	/^    size_t count;$/;"	m	struct:__anonbce2a1170408	typeref:typename:size_t
+count	ast_types.h	/^    int64_t count;$/;"	m	struct:__anonbce2a1170408	typeref:typename:int64_t
+count	ast_types.h	/^    int64_t count;$/;"	m	struct:__anonbce2a1170508	typeref:typename:int64_t
 count	expr.h	/^			size_t count;$/;"	m	struct:Expr::__anonfc32de7a010a::__anonfc32de7a0408	typeref:typename:size_t
-count	expr.h	/^    size_t count;$/;"	m	struct:__anonfc32de7a0808	typeref:typename:size_t
+count	expr.h	/^			size_t count;$/;"	m	struct:Expr::__anonfc32de7a010a::__anonfc32de7a0a08	typeref:typename:size_t
+count	expr.h	/^    size_t count;$/;"	m	struct:__anonfc32de7a0b08	typeref:typename:size_t
 count	hashmap.h	/^    size_t count;$/;"	m	struct:__anon58896add0508	typeref:typename:size_t
+count	parser.h	/^	size_t count;$/;"	m	struct:__anon1597d8c80308	typeref:typename:size_t
+count	parser.h	/^    size_t count;$/;"	m	struct:__anon1597d8c80108	typeref:typename:size_t
+count	pretty.h	/^    size_t count;$/;"	m	struct:__anon13fd41630108	typeref:typename:size_t
 count	token.h	/^	size_t count;$/;"	m	struct:__anonefd93d1c0108	typeref:typename:size_t
 current	parser.h	/^	size_t current;$/;"	m	struct:Parser	typeref:typename:size_t
 current	token.h	/^	size_t current;$/;"	m	struct:__anonefd93d1c0208	typeref:typename:size_t
 da_append	macros.h	/^#define da_append(/;"	d
+da_at	macros.h	/^#define da_at(/;"	d
 da_free	macros.h	/^#define da_free(/;"	d
 data	arena.h	/^	unsigned char* data;$/;"	m	struct:__anon3fde59c20108	typeref:typename:unsigned char *
 elseBranch	expr.h	/^			Expr* elseBranch;$/;"	m	struct:Expr::__anonfc32de7a010a::__anonfc32de7a0508	typeref:typename:Expr *
 entries	hashmap.h	/^    Entry* entries;$/;"	m	struct:__anon58896add0508	typeref:typename:Entry *
-eval	parser.c	/^int64_t eval(Expr* e) {$/;"	f	typeref:typename:int64_t
+env	parser.h	/^    Environment env;$/;"	m	struct:Parser	typeref:typename:Environment
+eval	parser.c	/^int64_t eval(Expr* e, Parser* p) {$/;"	f	typeref:typename:int64_t
 exprAlloc	expr.c	/^static inline Expr* exprAlloc(Parser* p) {$/;"	f	typeref:typename:Expr *	file:
+exprKids	pretty.h	/^static inline Kids exprKids(Expr* e, Expr* buf[3]) {$/;"	f	typeref:typename:Kids
+exprLabel	pretty.h	/^static inline const char* exprLabel(Expr* e, Parser* p, char* buf, size_t n) {$/;"	f	typeref:typename:const char *
 expressions	expr.h	/^		    Expr** expressions;$/;"	m	struct:Expr::__anonfc32de7a010a::__anonfc32de7a0408	typeref:typename:Expr **
 fallbackFlags	.zed/settings.json	/^        "fallbackFlags": [$/;"	a	object:lsp.clangd.initialization_options
 findEntry	hashmap.h	/^static Entry* findEntry(Entry* entries, size_t capacity, const char* key) {$/;"	f	typeref:typename:Entry *
+frameBase	parser.h	/^	int64_t frameBase;$/;"	m	struct:Parser	typeref:typename:int64_t
+frameTop	parser.h	/^	int64_t frameTop;$/;"	m	struct:Parser	typeref:typename:int64_t
 freeTable	hashmap.h	/^void freeTable(Table* table) {$/;"	f	typeref:typename:void
+function	expr.h	/^		} function;$/;"	m	union:Expr::__anonfc32de7a010a	typeref:struct:Expr::__anonfc32de7a010a::__anonfc32de7a0908
+functionBase	parser.h	/^	int64_t functionBase;$/;"	m	struct:Parser	typeref:typename:int64_t
+functionDepth	parser.h	/^	int64_t functionDepth;$/;"	m	struct:Parser	typeref:typename:int64_t
+functionList	parser.h	/^	FunctionList functionList;$/;"	m	struct:Parser	typeref:typename:FunctionList
+functionResolve	parser.c	/^int64_t functionResolve(Parser* p, Token t) {$/;"	f	typeref:typename:int64_t
 hashString	hashmap.h	/^static uint32_t hashString(const char* key, size_t length) {$/;"	f	typeref:typename:uint32_t
+index	expr.h	/^			int64_t index;$/;"	m	struct:Expr::__anonfc32de7a010a::__anonfc32de7a0908	typeref:typename:int64_t
+index	expr.h	/^			int64_t index;$/;"	m	struct:Expr::__anonfc32de7a010a::__anonfc32de7a0a08	typeref:typename:int64_t
 initTable	hashmap.h	/^void initTable(Table* table) {$/;"	f	typeref:typename:void
 initialization_options	.zed/settings.json	/^      "initialization_options": {$/;"	o	object:lsp.clangd
 integer	hashmap.h	/^        int64_t integer;$/;"	m	union:__anon58896add0208::__anon58896add030a	typeref:typename:int64_t
 isAtEnd	token.c	/^bool isAtEnd(Lexer* l) {$/;"	f	typeref:typename:bool
+isGlobal	ast_types.h	/^    bool isGlobal;$/;"	m	struct:__anonbce2a1170308	typeref:typename:bool
 items	ast_types.h	/^    Symbol* items;$/;"	m	struct:__anonbce2a1170408	typeref:typename:Symbol *
-items	expr.h	/^    Expr** items;$/;"	m	struct:__anonfc32de7a0808	typeref:typename:Expr **
+items	ast_types.h	/^    int64_t* items;$/;"	m	struct:__anonbce2a1170508	typeref:typename:int64_t *
+items	expr.h	/^    Expr** items;$/;"	m	struct:__anonfc32de7a0b08	typeref:typename:Expr **
+items	parser.h	/^	Function* items;$/;"	m	struct:__anon1597d8c80308	typeref:typename:Function *
+items	parser.h	/^    int64_t* items;$/;"	m	struct:__anon1597d8c80108	typeref:typename:int64_t *
+items	pretty.h	/^    Expr* const* items;$/;"	m	struct:__anon13fd41630108	typeref:typename:Expr * const *
 items	token.h	/^	Token* items;$/;"	m	struct:__anonefd93d1c0108	typeref:typename:Token *
 key	hashmap.h	/^    char* key;$/;"	m	struct:__anon58896add0408	typeref:typename:char *
 keywords	main.c	/^Table keywords;$/;"	v	typeref:typename:Table
@@ -227,48 +247,67 @@ kind	hashmap.h	/^    ValueKind kind;$/;"	m	struct:__anon58896add0208	typeref:typ
 kind	token.h	/^	TokenKind kind;$/;"	m	struct:Token	typeref:typename:TokenKind
 left	expr.h	/^			Expr* left;$/;"	m	struct:Expr::__anonfc32de7a010a::__anonfc32de7a0208	typeref:typename:Expr *
 length	ast_types.h	/^    size_t length;$/;"	m	struct:__anonbce2a1170308	typeref:typename:size_t
+length	parser.h	/^	size_t length;$/;"	m	struct:__anon1597d8c80208	typeref:typename:size_t
 length	token.h	/^	size_t length;$/;"	m	struct:Token	typeref:typename:size_t
 line	parser.h	/^	size_t line;$/;"	m	struct:Parser	typeref:typename:size_t
 line	token.h	/^	size_t line;$/;"	m	struct:Token	typeref:typename:size_t
 line	token.h	/^	size_t line;$/;"	m	struct:__anonefd93d1c0208	typeref:typename:size_t
+localCount	parser.h	/^	size_t localCount;$/;"	m	struct:__anon1597d8c80208	typeref:typename:size_t
 lsp	.zed/settings.json	/^  "lsp": {$/;"	o
 main	main.c	/^int main(void) {$/;"	f	typeref:typename:int
+makeAssign	expr.c	/^Expr* makeAssign(Parser* p, int64_t sym, Expr* newValue) {$/;"	f	typeref:typename:Expr *
 makeBinary	expr.c	/^Expr* makeBinary(Parser* p, Expr* left, Expr* right, TokenKind operator) {$/;"	f	typeref:typename:Expr *
 makeBlock	expr.c	/^Expr* makeBlock(Parser* p) {$/;"	f	typeref:typename:Expr *
+makeCall	expr.c	/^Expr* makeCall(Parser* p, int64_t index, Expr** args, size_t argCount) {$/;"	f	typeref:typename:Expr *
 makeConditional	expr.c	/^Expr* makeConditional(Parser* p, Expr* condition, Expr* thenBranch, Expr* elseBranch) {$/;"	f	typeref:typename:Expr *
-makeDecl	expr.c	/^Expr* makeDecl(Parser* p, int64_t slot, Expr* initializer) {$/;"	f	typeref:typename:Expr *
+makeDecl	expr.c	/^Expr* makeDecl(Parser* p, int64_t sym, Expr* initializer) {$/;"	f	typeref:typename:Expr *
+makeFunction	expr.c	/^Expr* makeFunction(Parser* p, int64_t index, Expr* body) {$/;"	f	typeref:typename:Expr *
+makeInfix	expr.c	/^Expr* makeInfix(Parser* p, Expr* left, Expr* right, TokenKind op) {$/;"	f	typeref:typename:Expr *
+makeLogical	expr.c	/^Expr* makeLogical(Parser* p, Expr* left, Expr* right, TokenKind op) {$/;"	f	typeref:typename:Expr *
 makeNumber	expr.c	/^Expr* makeNumber(Parser* p, int64_t value) {$/;"	f	typeref:typename:Expr *
+makeRead	expr.c	/^Expr* makeRead(Parser* p, int64_t sym) {$/;"	f	typeref:typename:Expr *
 makeUnary	expr.c	/^Expr* makeUnary(Parser* p, Expr* right, TokenKind operator) {$/;"	f	typeref:typename:Expr *
 match	token.c	/^bool match(Lexer* l, char expected) {$/;"	f	typeref:typename:bool
+maxSlot	parser.h	/^	int64_t maxSlot;$/;"	m	struct:Parser	typeref:typename:int64_t
 my_strdup	hashmap.h	/^static char* my_strdup(const char* source) {\\$/;"	f	typeref:typename:char *
 name	ast_types.h	/^    const char* name;$/;"	m	struct:__anonbce2a1170308	typeref:typename:const char *
+name	parser.h	/^	const char* name;$/;"	m	struct:__anon1597d8c80208	typeref:typename:const char *
+newValue	expr.h	/^			Expr* newValue;$/;"	m	struct:Expr::__anonfc32de7a010a::__anonfc32de7a0808	typeref:typename:Expr *
 number	expr.h	/^		int64_t number;$/;"	m	union:Expr::__anonfc32de7a010a	typeref:typename:int64_t
 offset	arena.h	/^	size_t offset;$/;"	m	struct:__anon3fde59c20108	typeref:typename:size_t
 op	expr.h	/^			TokenKind op;$/;"	m	struct:Expr::__anonfc32de7a010a::__anonfc32de7a0208	typeref:typename:TokenKind
 op	expr.h	/^			TokenKind op;$/;"	m	struct:Expr::__anonfc32de7a010a::__anonfc32de7a0308	typeref:typename:TokenKind
+paramCount	parser.h	/^	size_t paramCount;$/;"	m	struct:__anon1597d8c80208	typeref:typename:size_t
 parseExpr	expr.c	/^Expr* parseExpr(Parser* p, int minPrec) {$/;"	f	typeref:typename:Expr *
 parsePrimary	expr.c	/^Expr* parsePrimary(Parser* p) {$/;"	f	typeref:typename:Expr *
 parserIsAtEnd	parser.c	/^bool parserIsAtEnd(Parser* p) {$/;"	f	typeref:typename:bool
 peek	token.c	/^char peek(Lexer* l) {$/;"	f	typeref:typename:char
 peekNext	token.c	/^char peekNext(Lexer* l) {$/;"	f	typeref:typename:char
 precedenceOf	parser.c	/^int precedenceOf(TokenKind kind) {$/;"	f	typeref:typename:int
-printAst	parser.c	/^void printAst(Expr* e) {$/;"	f	typeref:typename:void
+printAst	pretty.h	/^static inline void printAst(Expr* e, Parser* p) {$/;"	f	typeref:typename:void
+printAstAt	pretty.h	/^static inline void printAstAt(Expr* e, Parser* p, int depth) {$/;"	f	typeref:typename:void
 readFileBinary	file.h	/^char* readFileBinary(char* fileName, size_t* fileSizeOut) {$/;"	f	typeref:typename:char *
 right	expr.h	/^			Expr* right;$/;"	m	struct:Expr::__anonfc32de7a010a::__anonfc32de7a0208	typeref:typename:Expr *
 right	expr.h	/^			Expr* right;$/;"	m	struct:Expr::__anonfc32de7a010a::__anonfc32de7a0308	typeref:typename:Expr *
 run	Makefile	/^run:$/;"	t
+scope	parser.h	/^	ScopeStack scope;$/;"	m	struct:Parser	typeref:typename:ScopeStack
+scopeBegin	scope.h	/^static inline int64_t scopeBegin(Parser* p) {$/;"	f	typeref:typename:int64_t
 scopeDecl	scope.h	/^static inline int64_t scopeDecl(Parser* p, Token t) {$/;"	f	typeref:typename:int64_t
-scopeResolve	scope.h	/^static inline int64_t scopeResolve(SymbolList* symbolList, const char* name, size_t length) {$/;"	f	typeref:typename:int64_t
+scopeEnd	scope.h	/^static inline void scopeEnd(Parser* p, int64_t mark) {$/;"	f	typeref:typename:void
+scopeResolve	scope.h	/^static inline int64_t scopeResolve(Parser* p, Token t) {$/;"	f	typeref:typename:int64_t
 slot	ast_types.h	/^    int64_t slot;$/;"	m	struct:__anonbce2a1170308	typeref:typename:int64_t
-slot	expr.h	/^		    int64_t slot;$/;"	m	struct:Expr::__anonfc32de7a010a::__anonfc32de7a0608	typeref:typename:int64_t
-slot	expr.h	/^		    int64_t slot;$/;"	m	struct:Expr::__anonfc32de7a010a::__anonfc32de7a0708	typeref:typename:int64_t
 source	parser.h	/^	char* source;$/;"	m	struct:Parser	typeref:typename:char *
 source	token.h	/^	char* source;$/;"	m	struct:__anonefd93d1c0208	typeref:typename:char *
 start	token.h	/^	size_t start;$/;"	m	struct:Token	typeref:typename:size_t
 start	token.h	/^	size_t start;$/;"	m	struct:__anonefd93d1c0208	typeref:typename:size_t
 strArena	parser.h	/^    Arena strArena;$/;"	m	struct:Parser	typeref:typename:Arena
 string	hashmap.h	/^        char* string;$/;"	m	union:__anon58896add0208::__anon58896add030a	typeref:typename:char *
+sym	expr.h	/^		    int64_t sym;$/;"	m	struct:Expr::__anonfc32de7a010a::__anonfc32de7a0608	typeref:typename:int64_t
+sym	expr.h	/^		    int64_t sym;$/;"	m	struct:Expr::__anonfc32de7a010a::__anonfc32de7a0708	typeref:typename:int64_t
+sym	expr.h	/^		    int64_t sym;$/;"	m	struct:Expr::__anonfc32de7a010a::__anonfc32de7a0808	typeref:typename:int64_t
+symName	pretty.h	/^static inline const char* symName(Parser* p, int64_t sym) {$/;"	f	typeref:typename:const char *
 symbolList	parser.h	/^    SymbolList symbolList;$/;"	m	struct:Parser	typeref:typename:SymbolList
+symbolMatches	scope.h	/^static inline bool symbolMatches(Parser* p, int64_t sym, Token t) {$/;"	f	typeref:typename:bool
 tableDelete	hashmap.h	/^bool tableDelete(Table* table, const char* key) {$/;"	f	typeref:typename:bool
 tableGet	hashmap.h	/^bool tableGet(Table* table, const char* key, Value* value) {$/;"	f	typeref:typename:bool
 tableSet	hashmap.h	/^bool tableSet(Table* table, const char* key, Value value) {$/;"	f	typeref:typename:bool
@@ -277,10 +316,14 @@ tokAdvance	parser.c	/^Token tokAdvance(Parser* p) {$/;"	f	typeref:typename:Token
 tokConsume	parser.c	/^bool tokConsume(Parser* p, TokenKind t, const char* s, bool msg) {$/;"	f	typeref:typename:bool
 tokPeek	parser.c	/^Token tokPeek(Parser* p) {$/;"	f	typeref:typename:Token
 tokPeekNext	parser.c	/^Token tokPeekNext(Parser* p) {$/;"	f	typeref:typename:Token
+tokenLexeme	token.h	/^static inline const char* tokenLexeme(TokenKind kind) {$/;"	f	typeref:typename:const char *
+tokenLexemes	token.h	/^static const char* const tokenLexemes[] = {$/;"	v	typeref:typename:const char * const[]
 tokens	parser.h	/^	TokenList tokens;$/;"	m	struct:Parser	typeref:typename:TokenList
 tokens	token.h	/^	TokenList tokens;$/;"	m	struct:__anonefd93d1c0208	typeref:typename:TokenList
 unary	expr.h	/^		} unary;$/;"	m	union:Expr::__anonfc32de7a010a	typeref:struct:Expr::__anonfc32de7a010a::__anonfc32de7a0308
 value	expr.h	/^			Expr* value;$/;"	m	struct:Expr::__anonfc32de7a010a::__anonfc32de7a0608	typeref:typename:Expr *
 value	hashmap.h	/^    Value value;$/;"	m	struct:__anon58896add0408	typeref:typename:Value
+varAddr	parser.c	/^static inline int64_t varAddr(Parser* p, int64_t sym) {$/;"	f	typeref:typename:int64_t	file:
+varAssign	expr.h	/^		} varAssign;$/;"	m	union:Expr::__anonfc32de7a010a	typeref:struct:Expr::__anonfc32de7a010a::__anonfc32de7a0808
 varDecl	expr.h	/^		} varDecl;$/;"	m	union:Expr::__anonfc32de7a010a	typeref:struct:Expr::__anonfc32de7a010a::__anonfc32de7a0608
 varRead	expr.h	/^		} varRead;$/;"	m	union:Expr::__anonfc32de7a010a	typeref:struct:Expr::__anonfc32de7a010a::__anonfc32de7a0708
