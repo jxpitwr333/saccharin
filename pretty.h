@@ -18,17 +18,22 @@ static inline Kids exprKids(Expr* e, Expr* buf[3]) {
     switch (e->kind) {
         case EXPR_NUMBER:
         case EXPR_VAR_READ:
-        case EXPR_FUN:
             return (Kids){NULL, 0};
         case EXPR_UNARY:
             buf[0] = e->as.unary.right;
             return (Kids){buf, 1};
+        case EXPR_FUN:
+            buf[0] = e->as.function.body;
+            return (Kids){buf, 1};
+        case EXPR_CALL:
+            return (Kids){e->as.call.args, e->as.call.count};
         case EXPR_VAR_DECL:
             buf[0] = e->as.varDecl.value;
             return (Kids){buf, 1};
         case EXPR_VAR_ASSIGN:
             buf[0] = e->as.varAssign.newValue;
             return (Kids){buf, 1};
+        case EXPR_LOGICAL:
         case EXPR_BINARY:
             buf[0] = e->as.binary.left;
             buf[1] = e->as.binary.right;
@@ -62,10 +67,16 @@ static inline const char* exprLabel(Expr* e, Parser* p, char* buf, size_t n) {
             return buf;
         case EXPR_VAR_READ:  return symName(p, e->as.varRead.sym);
         case EXPR_UNARY:     return tokenLexeme(e->as.unary.op);
+        case EXPR_LOGICAL:
         case EXPR_BINARY:    return tokenLexeme(e->as.binary.op);
         case EXPR_BLOCK:     return "block";
         case EXPR_CONDITIONAL: return "if";
-        case EXPR_FUN:       return "fun";
+        case EXPR_FUN:
+            snprintf(buf, n, "fun %s", p->functionList.items[e->as.function.index].name);
+            return buf;
+        case EXPR_CALL:
+            snprintf(buf, n, "call %s", p->functionList.items[e->as.call.index].name);
+            return buf;
     }
     return "<?>";
 }
