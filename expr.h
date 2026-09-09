@@ -9,6 +9,7 @@
 
 struct Expr {
 	ExprKind kind;
+	TypeKind type;
 	union {
 		struct {
 			Expr* right;

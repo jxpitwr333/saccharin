@@ -46,6 +46,8 @@ int main(void) {
     tableSet(&keywords, "true",   INT_VAL(TOKEN_TRUE));
     tableSet(&keywords, "while",  INT_VAL(TOKEN_WHILE));
     tableSet(&keywords, "let",    INT_VAL(TOKEN_LET));
+	tableSet(&keywords, "i64",  INT_VAL(TOKEN_I64));
+    tableSet(&keywords, "bool",    INT_VAL(TOKEN_BOOL));
 
 	Lexer lex = {
 		.current = 0,
@@ -70,6 +72,8 @@ int main(void) {
 			case '/': addToken(&lex, TOKEN_SLASH); break;
 			case ';': addToken(&lex, TOKEN_SEMICOLON); break;
 			case ',': addToken(&lex, TOKEN_COMMA); break;
+
+			case ':': addToken(&lex, TOKEN_COLON); break;
 
 			case '!': addToken(&lex, match(&lex, '=') ? TOKEN_BANG_EQUAL : TOKEN_BANG); break;
 			case '=': addToken(&lex, match(&lex, '=') ? TOKEN_EQUAL_EQUAL : TOKEN_EQUAL); break;

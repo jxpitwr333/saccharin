@@ -58,6 +58,9 @@ typedef enum {
 	X(TOKEN_WHILE, "while")\
 	X(TOKEN_LET, "let")\
 	X(TOKEN_COMMA, ",")\
+	X(TOKEN_COLON, ":")\
+	X(TOKEN_I64, "i64")\
+	X(TOKEN_BOOL, "bool")\
 	X(TOKEN_EOF, "<eof>")
 
 typedef enum {
@@ -66,11 +69,28 @@ typedef enum {
 #undef X
 } TokenKind;
 
+typedef enum {
+	TYPE_INT64,
+	TYPE_BOOL
+} TypeKind;
+
+typedef struct {
+	TypeKind kind;
+	union {
+		int64_t i64;
+		bool boolean;
+	} as;
+} Type;
+
+static Type type_bool_inst = { .kind = TYPE_BOOL };
+static Type type_i64_inst = { .kind = TYPE_INT64 };
+
 typedef struct {
     const char* name;
     size_t length;
     int64_t slot;
     bool isGlobal;
+	Type* type;
 } Symbol;
 
 typedef struct {

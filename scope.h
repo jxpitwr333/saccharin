@@ -13,7 +13,7 @@ static inline bool symbolMatches(Parser* p, int64_t sym, Token t) {
 		strncmp(p->symbolList.items[sym].name, p->source + t.start, t.length) == 0;
 }
 
-static inline int64_t scopeDecl(Parser* p, Token t) {
+static inline int64_t scopeDecl(Parser* p, Token t, Type* type) {
     int64_t slot = p->scope.count - p->functionBase;
     if (slot + 1 > p->maxSlot) p->maxSlot = slot + 1;
 
@@ -22,7 +22,7 @@ static inline int64_t scopeDecl(Parser* p, Token t) {
     buf[t.length] = '\0';
 
     int64_t sym = p->symbolList.count;
-    Symbol s = (Symbol){ buf, t.length, slot, p->functionDepth == 0 };
+    Symbol s = (Symbol){ buf, t.length, slot, p->functionDepth == 0, type };
     da_append(&p->symbolList, s);
     da_append(&p->scope, sym);
     return sym;

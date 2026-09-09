@@ -68,13 +68,30 @@ Expr* parsePrimary(Parser* p) {
             return makeConditional(p, condition, thenBranch, elseBranch);
 		}
         case TOKEN_LET: {
+			//let name : type = value
             Token name = tokPeek(p);
             if (!tokConsume(p, TOKEN_IDENTIFIER, "identifier", true)) return makeNumber(p, 0);
 
+			if (!tokConsume(p, TOKEN_COLON, ":", true)) return makeNumber(p, 0);
+
+			Token typeTok = tokAdvance(p);
+			Type* type = NULL;
+			switch (typeTok.kind) {
+				case TOKEN_I64:
+					type = &type_i64_inst;
+					break;
+				case TOKEN_BOOL:
+					type = &type_bool_inst;
+					break;
+				default:
+					fprintf(stderr, "Expected a valid type, got '%.*s' at line %zu\n", (int)t.length, p->source + t.start, t.line);
+					return makeNumber(p, 0);
+			}
+			
             tokConsume(p, TOKEN_EQUAL, "=", true);
             Expr* initializer = parseExpr(p, 0);
 
-            return makeDecl(p, scopeDecl(p, name), initializer);
+            return makeDecl(p, scopeDecl(p, name, type), initializer);
         }
         case TOKEN_IDENTIFIER: {
 			// this is a function
