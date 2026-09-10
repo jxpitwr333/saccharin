@@ -70,20 +70,24 @@ typedef enum {
 } TokenKind;
 
 typedef enum {
-	TYPE_INT64,
-	TYPE_BOOL
+	TYPE_I64,
+	TYPE_BOOL,
+    TYPE_ERR
 } TypeKind;
 
 typedef struct {
 	TypeKind kind;
-	union {
-		int64_t i64;
-		bool boolean;
-	} as;
 } Type;
 
+typedef struct {
+    Type** items;
+    size_t count;
+    size_t capacity;
+} TypeList;
+
 static Type type_bool_inst = { .kind = TYPE_BOOL };
-static Type type_i64_inst = { .kind = TYPE_INT64 };
+static Type type_i64_inst = { .kind = TYPE_I64 };
+static Type type_err_inst = { .kind = TYPE_ERR };
 
 typedef struct {
     const char* name;

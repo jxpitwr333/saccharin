@@ -22,6 +22,7 @@
 #include "parser.h"
 #include "scope.h"
 #include "pretty.h"
+#include "typecheck.h"
 
 #include "token.c"
 #include "expr.c"
@@ -46,8 +47,8 @@ int main(void) {
     tableSet(&keywords, "true",   INT_VAL(TOKEN_TRUE));
     tableSet(&keywords, "while",  INT_VAL(TOKEN_WHILE));
     tableSet(&keywords, "let",    INT_VAL(TOKEN_LET));
-	tableSet(&keywords, "i64",  INT_VAL(TOKEN_I64));
-    tableSet(&keywords, "bool",    INT_VAL(TOKEN_BOOL));
+	tableSet(&keywords, "i64",    INT_VAL(TOKEN_I64));
+    tableSet(&keywords, "bool",   INT_VAL(TOKEN_BOOL));
 
 	Lexer lex = {
 		.current = 0,
@@ -132,6 +133,12 @@ int main(void) {
 	
 	while (!parserIsAtEnd(&parser)) {
 		ast = parseExpr(&parser, 0);
+
+        Type* astType = typecheck(ast, &parser);
+        if (astType->kind == TYPE_ERR) {
+            fprintf(stderr, "Typecheck failed.\n");
+            return 1;
+        }
 
 		tokConsume(&parser, TOKEN_SEMICOLON, ";", false);
 

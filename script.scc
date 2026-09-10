@@ -1,5 +1,5 @@
-fun fact(n) {
-	if n <= 1 { 1; } else { n * fact(n - 1); };
+fun add(a : i64, b : i64) : i64 {
+    a + b;
 }
 
-fact(5);
+add(1, 2);

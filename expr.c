@@ -1,4 +1,5 @@
 #ifndef UNITY_BUILD
+    #include <string.h>
 	#include "macros.h"
 	#include <stdint.h>
 	#include "scope.h"
@@ -9,6 +10,7 @@
 	#include "arena.h"
 	#include <stdlib.h>
 	#include "parser.h"
+	#include "typecheck.h"
 #endif
 
 Expr* parsePrimary(Parser* p) {
@@ -75,19 +77,8 @@ Expr* parsePrimary(Parser* p) {
 			if (!tokConsume(p, TOKEN_COLON, ":", true)) return makeNumber(p, 0);
 
 			Token typeTok = tokAdvance(p);
-			Type* type = NULL;
-			switch (typeTok.kind) {
-				case TOKEN_I64:
-					type = &type_i64_inst;
-					break;
-				case TOKEN_BOOL:
-					type = &type_bool_inst;
-					break;
-				default:
-					fprintf(stderr, "Expected a valid type, got '%.*s' at line %zu\n", (int)t.length, p->source + t.start, t.line);
-					return makeNumber(p, 0);
-			}
-			
+			Type* type = getTypeFromToken(typeTok, p);
+
             tokConsume(p, TOKEN_EQUAL, "=", true);
             Expr* initializer = parseExpr(p, 0);
 
@@ -137,7 +128,7 @@ Expr* parsePrimary(Parser* p) {
         }
 		case TOKEN_FUN: {
 			// syntax:
-			// fun name(param1, param2, ...) {
+			// fun name(param1, param2, ...) : return_type {
 			//     body;
 			// }
 			Token name = tokPeek(p);
@@ -148,11 +139,11 @@ Expr* parsePrimary(Parser* p) {
 			fname[name.length] = '\0';
 
 			int64_t index = p->functionList.count;
-			Function fn = { fname, name.length, 0, 0, NULL };
+			Function fn = { fname, name.length, 0, 0, NULL, NULL, NULL };
 			da_append(&p->functionList, fn);
 
 			tokConsume(p, TOKEN_LEFT_PAREN, "(", true);
-			
+
 			int64_t saved = p->functionBase;
 			int64_t savedMax = p->maxSlot;
 			int64_t mark = scopeBegin(p);
@@ -160,18 +151,34 @@ Expr* parsePrimary(Parser* p) {
 			p->maxSlot = 0;
 			p->functionDepth++;
 
+			TypeList tempTypes = {0};
 			size_t paramCount = 0;
 			while (tokPeek(p).kind != TOKEN_RIGHT_PAREN && tokPeek(p).kind != TOKEN_EOF) {
 				Token param = tokPeek(p);
 				if (!tokConsume(p, TOKEN_IDENTIFIER, "identifier", true)) break;
 
-				scopeDecl(p, param);
+				if (!tokConsume(p, TOKEN_COLON, ":", true)) break;
+
+				Token typeTok = tokAdvance(p);
+				Type* type = getTypeFromToken(typeTok, p);
+
+				da_append(&tempTypes, type);
+
+				scopeDecl(p, param, type);
 				paramCount++;
 				if (!tokConsume(p, TOKEN_COMMA, ",", false)) break;
 			}
 			tokConsume(p, TOKEN_RIGHT_PAREN, ")", true);
 
+			tokConsume(p, TOKEN_COLON, ":", true);
+
+			Type* funType = getTypeFromToken(tokAdvance(p), p);
+
+			p->functionList.items[index].paramTypes = arenaAlloc(&p->astArena, sizeof(Type*) * tempTypes.count);
+			memcpy(&p->functionList.items[index], tempTypes.items, tempTypes.count * sizeof(Type*));
+			da_free(&tempTypes);
 			p->functionList.items[index].paramCount = paramCount;
+			p->functionList.items[index].retType = funType;
 
 			Expr* body = parseExpr(p, 0);
 			p->functionList.items[index].localCount = p->maxSlot;

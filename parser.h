@@ -25,6 +25,8 @@ typedef struct {
 	size_t paramCount;
 	size_t localCount;
 	Expr* body;
+	Type* retType;
+	Type** paramTypes;
 } Function;
 
 typedef struct {
