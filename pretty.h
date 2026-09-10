@@ -17,6 +17,7 @@ typedef struct {
 static inline Kids exprKids(Expr* e, Expr* buf[3]) {
     switch (e->kind) {
         case EXPR_NUMBER:
+		case EXPR_BOOL:
         case EXPR_VAR_READ:
             return (Kids){NULL, 0};
         case EXPR_UNARY:
@@ -59,6 +60,9 @@ static inline const char* exprLabel(Expr* e, Parser* p, char* buf, size_t n) {
         case EXPR_NUMBER:
             snprintf(buf, n, "%lld", (long long)e->as.number);
             return buf;
+		case EXPR_BOOL:
+            snprintf(buf, n, "%s", e->as.boolean ? "true" : "false");
+            return buf;
         case EXPR_VAR_DECL:
             snprintf(buf, n, "let %s", symName(p, e->as.varDecl.sym));
             return buf;
@@ -83,7 +87,7 @@ static inline const char* exprLabel(Expr* e, Parser* p, char* buf, size_t n) {
 
 static inline void printAstAt(Expr* e, Parser* p, int depth) {
     if (!e) {
-        printf("<null>");
+        fprintf(stderr, "<null>");
         return;
     }
 
@@ -93,23 +97,23 @@ static inline void printAstAt(Expr* e, Parser* p, int depth) {
     const char* name = exprLabel(e, p, label, sizeof label);
 
     if (kids.count == 0) {
-        printf("%s", name);
+        fprintf(stderr, "%s", name);
         return;
     }
 
     bool wide = kids.count > 2;
 
-    printf("(%s", name);
+    fprintf(stderr, "(%s", name);
     for (size_t i = 0; i < kids.count; ++i) {
         if (wide) {
-            printf("\n");
-            for (int j = 0; j <= depth; ++j) printf("    ");
+            fprintf(stderr, "\n");
+            for (int j = 0; j <= depth; ++j) fprintf(stderr, "    ");
         } else {
-            printf(" ");
+            fprintf(stderr, " ");
         }
         printAstAt(kids.items[i], p, depth + 1);
     }
-    printf(")");
+    fprintf(stderr, ")");
 }
 
 static inline void printAst(Expr* e, Parser* p) {

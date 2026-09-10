@@ -145,11 +145,12 @@ int main(void) {
 		parser.frameBase = 0;
 		parser.frameTop  = parser.maxSlot;
 
-        printf("--- AST ---\n");
+		// sending everything to stderr to avoid having to fflush
+        fprintf(stderr, "--- AST ---\n");
 		printAst(ast, &parser);
-        printf("\n--- EVAL ---\n");
+        fprintf(stderr, "\n--- EVAL ---\n");
 		int64_t result = (long long)eval(ast, &parser);
-        printf("block result = %lld\n", (long long)result);
+        fprintf(stderr, "block result = %lld\n", (long long)result);
 	}
 
 	da_free(&parser.env);

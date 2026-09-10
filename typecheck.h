@@ -15,6 +15,10 @@ static inline Type* typecheck(Expr* e, Parser* p) {
             e->type = &type_i64_inst;
             return e->type;
 
+		case EXPR_BOOL:
+            e->type = &type_bool_inst;
+            return e->type;
+
         case EXPR_VAR_READ: {
             Symbol* s = &p->symbolList.items[e->as.varRead.sym];
             e->type = s->type;
@@ -70,6 +74,8 @@ static inline Type* typecheck(Expr* e, Parser* p) {
             Type* cond_t = typecheck(e->as.conditional.condition, p);
             if (cond_t->kind != TYPE_BOOL) {
                 fprintf(stderr, "TypeError: condition in if statement must evaluate to bool.\n");
+				e->type = &type_err_inst;
+				return &type_err_inst;
             }
 
             Type* then_t = typecheck(e->as.conditional.thenBranch, p);
@@ -90,7 +96,7 @@ static inline Type* typecheck(Expr* e, Parser* p) {
             Type* init_t = typecheck(e->as.varDecl.value, p);
             Symbol* s = &p->symbolList.items[e->as.varDecl.sym];
 
-            if (s->type != init_t) {
+            if (s->type->kind != init_t->kind) {
                 fprintf(stderr, "TypeError: initializer type does not match explicit declaration.\n");
                 e->type = &type_err_inst;
                 return &type_err_inst;
@@ -101,7 +107,7 @@ static inline Type* typecheck(Expr* e, Parser* p) {
         }
 
         case EXPR_BLOCK: {
-            Type* last_type = TYPE_I64;
+            Type* last_type = &type_i64_inst;
             for (size_t i = 0; i < e->as.block.count; ++i) {
                 last_type = typecheck(e->as.block.expressions[i], p);
             }
@@ -115,6 +121,7 @@ static inline Type* typecheck(Expr* e, Parser* p) {
 
             if (body_t->kind != fn->retType->kind) {
                 fprintf(stderr, "TypeError: function type mismatch.\n");
+				e->type = &type_err_inst;
                 return &type_err_inst;
             }
 
@@ -127,6 +134,7 @@ static inline Type* typecheck(Expr* e, Parser* p) {
 
             if (e->as.call.count != fn->paramCount) {
                 fprintf(stderr, "TypeError: expected %zu arguments, got %zu.\n", fn->paramCount, e->as.call.count);
+				e->type = &type_err_inst;
                 return &type_err_inst;
             }
 
@@ -134,6 +142,7 @@ static inline Type* typecheck(Expr* e, Parser* p) {
                 Type* arg_t = typecheck(e->as.call.args[i], p);
                 if (arg_t->kind != fn->paramTypes[i]->kind) {
                     fprintf(stderr, "TypeError: argument %zu type mismatch.\n", i);
+					e->type = &type_err_inst;
                     return &type_err_inst;
                 }
             }
@@ -194,11 +203,10 @@ static inline Type* typecheck(Expr* e, Parser* p) {
             e->type = &type_bool_inst;
             return &type_bool_inst;
         }
-
-        default:
-            e->type = &type_err_inst;
-            return &type_err_inst;
     }
+	// default, but lets -Wswitch notify me instead of failing silently
+	e->type = &type_err_inst;
+	return &type_err_inst;
 }
 
 static inline Type* getTypeFromToken(Token t, Parser* p) {

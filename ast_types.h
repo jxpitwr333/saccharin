@@ -15,6 +15,7 @@ typedef enum {
 	EXPR_BINARY,
 	EXPR_UNARY,
 	EXPR_NUMBER,
+	EXPR_BOOL,
 	EXPR_BLOCK,
 	EXPR_CONDITIONAL,
 	EXPR_FUN,
@@ -37,6 +38,7 @@ typedef enum {
 	X(TOKEN_SLASH, "/")\
 	X(TOKEN_SEMICOLON, ";")\
 	X(TOKEN_NUMBER_LITERAL, "<number>")\
+	X(TOKEN_BOOL_LITERAL, "<bool>")\
 	X(TOKEN_EQUAL, "=")\
 	X(TOKEN_EQUAL_EQUAL, "==")\
 	X(TOKEN_BANG, "!")\

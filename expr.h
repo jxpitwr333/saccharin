@@ -35,6 +35,8 @@ struct Expr {
 
 		int64_t number;
 
+		bool boolean;
+
 		struct {
 		    int64_t sym;
 			Expr* value;
@@ -71,6 +73,7 @@ typedef struct {
 Expr* parsePrimary(Parser* p);
 Expr* parseExpr(Parser* p, int minPrec);
 Expr* makeNumber(Parser* p, int64_t value);
+Expr* makeBoolean(Parser* p, bool value);
 Expr* makeBinary(Parser* p, Expr* left, Expr* right, TokenKind op);
 Expr* makeUnary(Parser* p, Expr* right, TokenKind op);
 Expr* makeBlock(Parser* p);

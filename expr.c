@@ -13,12 +13,30 @@
 	#include "typecheck.h"
 #endif
 
+static inline bool isBlockLike(Expr* e) {
+	switch (e->kind) {
+		case EXPR_BLOCK:
+        case EXPR_CONDITIONAL:
+        case EXPR_FUN:
+            return true;
+		default:
+			return false;
+	}
+	return false;
+}
+
 Expr* parsePrimary(Parser* p) {
     Token t = tokAdvance(p);
     switch (t.kind) {
         case TOKEN_NUMBER_LITERAL: {
             int64_t val = (int64_t)strtoll(p->source + t.start, NULL, 10);
             return makeNumber(p, val);
+		}
+		case TOKEN_TRUE: {
+			return makeBoolean(p, true);
+		}
+		case TOKEN_FALSE: {
+			return makeBoolean(p, false);
 		}
         case TOKEN_LEFT_PAREN: {
             Expr* expr = parseExpr(p, 0);
@@ -44,7 +62,7 @@ Expr* parsePrimary(Parser* p) {
                 Expr* expr = parseExpr(p, 0);
                 da_append(&exprs, expr);
 
-                tokConsume(p, TOKEN_SEMICOLON, ";", true);
+                tokConsume(p, TOKEN_SEMICOLON, ";", !isBlockLike(expr));
             }
 
             if (tokAdvance(p).kind != TOKEN_RIGHT_BRACE)
@@ -63,7 +81,7 @@ Expr* parsePrimary(Parser* p) {
             Expr* thenBranch = parseExpr(p, 0);
 
             Expr* elseBranch = NULL;
-            if (tokConsume(p, TOKEN_ELSE, "else", true)) {
+            if (tokConsume(p, TOKEN_ELSE, "else", false)) {
                 elseBranch = parseExpr(p, 0);
             }
 
@@ -100,11 +118,6 @@ Expr* parsePrimary(Parser* p) {
 					if (!tokConsume(p, TOKEN_COMMA, ",", false)) break;
 				}
 				tokConsume(p, TOKEN_RIGHT_PAREN, ")", true);
-
-				if (args.count != p->functionList.items[index].paramCount) {
-					fprintf(stderr, "'%.*s' expects %zu arguments, got %zu\n", (int)t.length, p->source + t.start, p->functionList.items[index].paramCount, args.count);
-					return makeNumber(p, 0);
-				}
 
 				Expr* call = makeCall(p, index, args.items, args.count);
 				da_free(&args);
@@ -175,7 +188,7 @@ Expr* parsePrimary(Parser* p) {
 			Type* funType = getTypeFromToken(tokAdvance(p), p);
 
 			p->functionList.items[index].paramTypes = arenaAlloc(&p->astArena, sizeof(Type*) * tempTypes.count);
-			memcpy(&p->functionList.items[index], tempTypes.items, tempTypes.count * sizeof(Type*));
+			memcpy(p->functionList.items[index].paramTypes, tempTypes.items, tempTypes.count * sizeof(Type*));
 			da_free(&tempTypes);
 			p->functionList.items[index].paramCount = paramCount;
 			p->functionList.items[index].retType = funType;
@@ -198,18 +211,20 @@ Expr* parsePrimary(Parser* p) {
 
 Expr* parseExpr(Parser* p, int minPrec) {
     Expr* left = parsePrimary(p);
+    if (isBlockLike(left)) return left;
 
     while (minPrec < precedenceOf(tokPeek(p).kind)) {
         Token op = tokAdvance(p);
         Expr* right = parseExpr(p, precedenceOf(op.kind));
         left = makeInfix(p, left, right, op.kind);
     }
-
     return left;
 }
 
 static inline Expr* exprAlloc(Parser* p) {
-    return (Expr*)(arenaAlloc(&p->astArena, sizeof(Expr)));
+    Expr* e = arenaAlloc(&p->astArena, sizeof(Expr));
+	e->type = NULL;
+	return e;
 }
 
 Expr* makeNumber(Parser* p, int64_t value) {
@@ -217,6 +232,13 @@ Expr* makeNumber(Parser* p, int64_t value) {
     e->kind = EXPR_NUMBER;
     e->as.number = value;
     return e;
+}
+
+Expr* makeBoolean(Parser* p, bool value) {
+	Expr* e = exprAlloc(p);
+    e->kind = EXPR_BOOL;
+    e->as.boolean = value;
+	return e;
 }
 
 Expr* makeBinary(Parser* p, Expr* left, Expr* right, TokenKind operator) {

@@ -54,7 +54,7 @@ bool tokConsume(Parser* p, TokenKind t, const char* s, bool msg) {
         tokAdvance(p);
         return true;
     }
-    if (msg) printf("Expected '%s' at line '%zu'\n", s, tokPeek(p).line);
+    if (msg) fprintf(stderr, "Expected '%s' at line '%zu'\n", s, tokPeek(p).line);
     return false;
 }
 
@@ -67,6 +67,9 @@ int64_t eval(Expr* e, Parser* p) {
     if (!e) return 0;
 
     switch (e->kind) {
+		case EXPR_BOOL:
+            return e->as.boolean;
+
         case EXPR_NUMBER:
             return e->as.number;
 
