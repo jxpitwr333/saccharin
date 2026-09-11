@@ -61,6 +61,15 @@ struct Expr {
 			Expr** args;
 			size_t count;
 		} call;
+
+        struct {
+            Expr* value;
+        } print;
+
+        struct {
+            Expr* condition;
+            Expr* body;
+        } whileExpr;
 	} as;
 };
 
@@ -85,6 +94,7 @@ Expr* makeFunction(Parser* p, int64_t index, Expr* body);
 Expr* makeCall(Parser* p, int64_t index, Expr** args, size_t argCount);
 Expr* makeLogical(Parser* p, Expr* left, Expr* right, TokenKind op);
 Expr* makeInfix(Parser* p, Expr* left, Expr* right, TokenKind op);
-
+Expr* makeWhile(Parser* p, Expr* condition, Expr* body);
+Expr* makePrint(Parser* p, Expr* value);
 
 #endif

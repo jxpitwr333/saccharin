@@ -18,6 +18,7 @@ static inline bool isBlockLike(Expr* e) {
 		case EXPR_BLOCK:
         case EXPR_CONDITIONAL:
         case EXPR_FUN:
+        case EXPR_WHILE:
             return true;
 		default:
 			return false;
@@ -52,6 +53,15 @@ Expr* parsePrimary(Parser* p) {
             Expr* operand = parseExpr(p, PREC_UNARY);
             return makeUnary(p, operand, TOKEN_BANG);
 		}
+        case TOKEN_WHILE: {
+            Expr* condition = parseExpr(p, 0);
+            Expr* body = parseExpr(p, 0);
+            return makeWhile(p, condition, body);
+        }
+        case TOKEN_PRINT: {
+            Expr* value = parseExpr(p, 0);
+            return makePrint(p, value);
+        }
         case TOKEN_LEFT_BRACE: {
 			int64_t mark = scopeBegin(p);
             Expr* block = makeBlock(p);
@@ -333,4 +343,19 @@ Expr* makeInfix(Parser* p, Expr* left, Expr* right, TokenKind op) {
         default:
             return makeBinary(p, left, right, op);
     }
+}
+
+Expr* makeWhile(Parser* p, Expr* condition, Expr* body) {
+    Expr* e = exprAlloc(p);
+    e->kind = EXPR_WHILE;
+    e->as.whileExpr.condition = condition;
+    e->as.whileExpr.body = body;
+    return e;
+}
+
+Expr* makePrint(Parser* p, Expr* value) {
+    Expr* e = exprAlloc(p);
+    e->kind = EXPR_PRINT;
+    e->as.print.value = value;
+    return e;
 }

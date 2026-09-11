@@ -11,13 +11,44 @@
 
 static inline Type* typecheck(Expr* e, Parser* p) {
     switch (e->kind) {
-        case EXPR_NUMBER:
+        case EXPR_NUMBER: {
             e->type = &type_i64_inst;
             return e->type;
+        }
 
-		case EXPR_BOOL:
+        case EXPR_WHILE: {
+            Type* cond_t = typecheck(e->as.whileExpr.condition, p);
+            if (cond_t->kind != TYPE_BOOL) {
+                fprintf(stderr, "TypeError: while loop condition must evaluate to bool.\n");
+                e->type = &type_err_inst;
+                return &type_err_inst;
+            }
+
+            Type* body_t = typecheck(e->as.whileExpr.body, p);
+            if (body_t->kind == TYPE_ERR) {
+                e->type = &type_err_inst;
+                return &type_err_inst;
+            }
+            
+            e->type = &type_i64_inst;
+            return e->type;
+        }
+        
+        case EXPR_PRINT: {
+            Type* val_t = typecheck(e->as.print.value, p);
+            if (val_t->kind == TYPE_ERR) {
+                e->type = &type_err_inst;
+                return &type_err_inst;
+            }
+
+            e->type = val_t;
+            return e->type;
+        }
+
+		case EXPR_BOOL: {
             e->type = &type_bool_inst;
             return e->type;
+        }
 
         case EXPR_VAR_READ: {
             Symbol* s = &p->symbolList.items[e->as.varRead.sym];

@@ -73,6 +73,29 @@ int64_t eval(Expr* e, Parser* p) {
         case EXPR_NUMBER:
             return e->as.number;
 
+        case EXPR_WHILE: {
+            int64_t lastRes = 0;
+            while (eval(e->as.whileExpr.condition, p)) {
+                lastRes = eval(e->as.whileExpr.body, p);
+            }
+            return lastRes;
+        }
+
+        case EXPR_PRINT: {
+            int64_t val = eval(e->as.print.value, p);
+            switch (e->as.print.value->type->kind) {
+                case TYPE_BOOL:
+                    fprintf(stderr, "%s\n", val ? "true" : "false");
+                    break;
+                case TYPE_I64:
+                    fprintf(stderr, "%lld\n", (long long)val);
+                    break;
+                default:
+                    fprintf(stderr, "print error: Unhandled type.\n");
+            }
+            return 0;
+        }
+
 		case EXPR_UNARY: {
             int64_t val = eval(e->as.unary.right, p);
 

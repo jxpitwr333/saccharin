@@ -49,6 +49,7 @@ int main(void) {
     tableSet(&keywords, "let",    INT_VAL(TOKEN_LET));
 	tableSet(&keywords, "i64",    INT_VAL(TOKEN_I64));
     tableSet(&keywords, "bool",   INT_VAL(TOKEN_BOOL));
+    tableSet(&keywords, "print",  INT_VAL(TOKEN_PRINT));
 
 	Lexer lex = {
 		.current = 0,

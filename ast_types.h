@@ -23,7 +23,9 @@ typedef enum {
 	EXPR_VAR_DECL,
 	EXPR_VAR_READ,
 	EXPR_VAR_ASSIGN,
-	EXPR_LOGICAL
+	EXPR_LOGICAL,
+    EXPR_PRINT,
+    EXPR_WHILE
 } ExprKind;
 
 #define TOKEN_LIST(X)\
@@ -63,6 +65,7 @@ typedef enum {
 	X(TOKEN_COLON, ":")\
 	X(TOKEN_I64, "i64")\
 	X(TOKEN_BOOL, "bool")\
+	X(TOKEN_PRINT, "print")\
 	X(TOKEN_EOF, "<eof>")
 
 typedef enum {
