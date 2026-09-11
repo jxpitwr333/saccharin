@@ -34,6 +34,13 @@ static inline Kids exprKids(Expr* e, Expr* buf[3]) {
         case EXPR_VAR_ASSIGN:
             buf[0] = e->as.varAssign.newValue;
             return (Kids){buf, 1};
+        case EXPR_PRINT:
+            buf[0] = e->as.print.value;
+            return (Kids){buf, 1};
+        case EXPR_WHILE:
+            buf[0] = e->as.whileExpr.condition;
+            buf[1] = e->as.whileExpr.body;
+            return (Kids){buf, 2};
         case EXPR_LOGICAL:
         case EXPR_BINARY:
             buf[0] = e->as.binary.left;
@@ -75,6 +82,8 @@ static inline const char* exprLabel(Expr* e, Parser* p, char* buf, size_t n) {
         case EXPR_BINARY:    return tokenLexeme(e->as.binary.op);
         case EXPR_BLOCK:     return "block";
         case EXPR_CONDITIONAL: return "if";
+        case EXPR_WHILE:     return "while";
+        case EXPR_PRINT:     return "print";
         case EXPR_FUN:
             snprintf(buf, n, "fun %s", p->functionList.items[e->as.function.index].name);
             return buf;
