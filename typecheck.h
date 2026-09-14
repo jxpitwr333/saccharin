@@ -34,6 +34,30 @@ static inline Type* typecheck(Expr* e, Parser* p) {
             return e->type;
         }
         
+        case EXPR_RETURN: {
+            if (p->currentFunction < 0) {
+                fprintf(stderr, "TypeError: return outside of a function.\n");
+                e->type = &type_err_inst;
+                return e->type;
+            }
+
+            Function* fn = &p->functionList.items[p->currentFunction];
+            Type* val_t = typecheck(e->as.ret.value, p);
+            if (val_t->kind == TYPE_ERR) {
+                e->type = &type_err_inst;
+                return e->type;
+            }
+
+            if (val_t->kind != fn->retType->kind) {
+                fprintf(stderr, "TypeError: return value does not match function type.\n");
+                e->type = &type_err_inst;
+                return e->type;
+            }
+
+            e->type = fn->retType;
+            return e->type;
+        }
+
         case EXPR_PRINT: {
             Type* val_t = typecheck(e->as.print.value, p);
             if (val_t->kind == TYPE_ERR) {
@@ -148,7 +172,10 @@ static inline Type* typecheck(Expr* e, Parser* p) {
 
         case EXPR_FUN: {
             Function* fn = &p->functionList.items[e->as.function.index];
+            int64_t saved = p->currentFunction;
+            p->currentFunction = e->as.function.index;
             Type* body_t = typecheck(e->as.function.body, p);
+            p->currentFunction = saved;
 
             if (body_t->kind != fn->retType->kind) {
                 fprintf(stderr, "TypeError: function type mismatch.\n");

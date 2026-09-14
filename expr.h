@@ -70,6 +70,10 @@ struct Expr {
             Expr* condition;
             Expr* body;
         } whileExpr;
+
+        struct {
+            Expr* value;
+        } ret;
 	} as;
 };
 
@@ -96,5 +100,6 @@ Expr* makeLogical(Parser* p, Expr* left, Expr* right, TokenKind op);
 Expr* makeInfix(Parser* p, Expr* left, Expr* right, TokenKind op);
 Expr* makeWhile(Parser* p, Expr* condition, Expr* body);
 Expr* makePrint(Parser* p, Expr* value);
+Expr* makeReturn(Parser* p, Expr* value);
 
 #endif

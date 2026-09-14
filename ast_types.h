@@ -25,7 +25,8 @@ typedef enum {
 	EXPR_VAR_ASSIGN,
 	EXPR_LOGICAL,
     EXPR_PRINT,
-    EXPR_WHILE
+    EXPR_WHILE,
+    EXPR_RETURN
 } ExprKind;
 
 #define TOKEN_LIST(X)\

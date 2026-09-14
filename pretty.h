@@ -34,6 +34,9 @@ static inline Kids exprKids(Expr* e, Expr* buf[3]) {
         case EXPR_VAR_ASSIGN:
             buf[0] = e->as.varAssign.newValue;
             return (Kids){buf, 1};
+        case EXPR_RETURN:
+            buf[0] = e->as.ret.value;
+            return (Kids){buf, 1};
         case EXPR_PRINT:
             buf[0] = e->as.print.value;
             return (Kids){buf, 1};
@@ -84,6 +87,7 @@ static inline const char* exprLabel(Expr* e, Parser* p, char* buf, size_t n) {
         case EXPR_CONDITIONAL: return "if";
         case EXPR_WHILE:     return "while";
         case EXPR_PRINT:     return "print";
+        case EXPR_RETURN:    return "return";
         case EXPR_FUN:
             snprintf(buf, n, "fun %s", p->functionList.items[e->as.function.index].name);
             return buf;

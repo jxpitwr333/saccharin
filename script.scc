@@ -1,7 +1,9 @@
-fun add(a : i64, b : i64) : i64 {
-    a + b;
+fun find(n : i64) : i64 {
+    let i : i64 = 0;
+    while true {
+        if i * i >= n { return i; };
+        i = i + 1;
+    }
+    -1;
 }
-
-let res : i64 = add(1, 2);
-
-print res;
+print find(50);

@@ -58,6 +58,15 @@ Expr* parsePrimary(Parser* p) {
             Expr* body = parseExpr(p, 0);
             return makeWhile(p, condition, body);
         }
+        case TOKEN_RETURN: {
+            // bare return has no meaning in an expression language
+            if (tokPeek(p).kind == TOKEN_SEMICOLON || tokPeek(p).kind == TOKEN_RIGHT_BRACE) {
+                fprintf(stderr, "Expected a value after return at line %zu\n", t.line);
+                return makeNumber(p, 0);
+            }
+            Expr* value = parseExpr(p, 0);
+            return makeReturn(p, value);
+        }
         case TOKEN_PRINT: {
             Expr* value = parseExpr(p, 0);
             return makePrint(p, value);
@@ -357,5 +366,12 @@ Expr* makePrint(Parser* p, Expr* value) {
     Expr* e = exprAlloc(p);
     e->kind = EXPR_PRINT;
     e->as.print.value = value;
+    return e;
+}
+
+Expr* makeReturn(Parser* p, Expr* value) {
+    Expr* e = exprAlloc(p);
+    e->kind = EXPR_RETURN;
+    e->as.ret.value = value;
     return e;
 }

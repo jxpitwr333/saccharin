@@ -76,8 +76,16 @@ int64_t eval(Expr* e, Parser* p) {
         case EXPR_WHILE: {
             while (eval(e->as.whileExpr.condition, p)) {
                 eval(e->as.whileExpr.body, p);
+                if (p->returning) break;
             }
             return 0;
+        }
+
+        case EXPR_RETURN: {
+            int64_t val = eval(e->as.ret.value, p);
+            p->returnValue = val;
+            p->returning = true;
+            return val;
         }
 
         case EXPR_PRINT: {
@@ -138,6 +146,7 @@ int64_t eval(Expr* e, Parser* p) {
 			int64_t lastRes = 0;
             for (size_t i = 0; i < e->as.block.count; ++i) {
 				lastRes = (long long)eval(e->as.block.expressions[i], p);
+				if (p->returning) break;
 			}
             return lastRes;
         }
@@ -186,6 +195,10 @@ int64_t eval(Expr* e, Parser* p) {
 			p->frameTop = newBase + fn->localCount;
 
 			int64_t result = eval(fn->body, p);
+			if (p->returning) {
+				p->returning = false;
+				result = p->returnValue;
+			}
 			p->frameBase = savedBase;
 			p->frameTop = savedTop;
 			return result;

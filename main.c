@@ -127,7 +127,8 @@ int main(void) {
 		.line = 1,
 		.source = lex.source,
 		.tokens = lex.tokens,
-		.functionBase = 0
+		.functionBase = 0,
+		.currentFunction = -1
 	};
 
 	Expr* ast = NULL;

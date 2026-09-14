@@ -51,6 +51,9 @@ struct Parser {
 	int64_t functionDepth;
 	int64_t frameTop;
 	int64_t frameBase;
+	bool returning;
+	int64_t returnValue;
+	int64_t currentFunction;
 };
 
 int precedenceOf(TokenKind kind);
