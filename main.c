@@ -82,6 +82,8 @@ int main(void) {
 			case '<': addToken(&lex, match(&lex, '=') ? TOKEN_LESS_EQUAL : TOKEN_LESS); break;
 			case '>': addToken(&lex, match(&lex, '=') ? TOKEN_GREATER_EQUAL : TOKEN_GREATER); break;
 
+			case '&': addToken(&lex, TOKEN_AMPERSAND); break;
+
 			case ' ':
 			case '\r':
 			case '\t':

@@ -10,6 +10,7 @@
 typedef struct Parser Parser;
 typedef struct Expr Expr;
 typedef struct Token Token;
+typedef struct Type Type;
 
 typedef enum {
 	EXPR_BINARY,
@@ -66,7 +67,8 @@ typedef enum {
 	X(TOKEN_COLON, ":")\
 	X(TOKEN_I64, "i64")\
 	X(TOKEN_BOOL, "bool")\
-	X(TOKEN_PRINT, "print")\
+    X(TOKEN_PRINT, "print")\
+	X(TOKEN_AMPERSAND, "&")\
 	X(TOKEN_EOF, "<eof>")
 
 typedef enum {
@@ -74,26 +76,6 @@ typedef enum {
 	TOKEN_LIST(X)
 #undef X
 } TokenKind;
-
-typedef enum {
-	TYPE_I64,
-	TYPE_BOOL,
-    TYPE_ERR
-} TypeKind;
-
-typedef struct {
-	TypeKind kind;
-} Type;
-
-typedef struct {
-    Type** items;
-    size_t count;
-    size_t capacity;
-} TypeList;
-
-static Type type_bool_inst = { .kind = TYPE_BOOL };
-static Type type_i64_inst = { .kind = TYPE_I64 };
-static Type type_err_inst = { .kind = TYPE_ERR };
 
 typedef struct {
     const char* name;
