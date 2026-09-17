@@ -94,6 +94,7 @@ int64_t eval(Expr* e, Parser* p) {
                 case TYPE_BOOL:
                     fprintf(stderr, "%s\n", val ? "true" : "false");
                     break;
+				case TYPE_PTR:
                 case TYPE_I64:
                     fprintf(stderr, "%lld\n", (long long)val);
                     break;
@@ -202,6 +203,14 @@ int64_t eval(Expr* e, Parser* p) {
 			p->frameBase = savedBase;
 			p->frameTop = savedTop;
 			return result;
+		}
+
+		case EXPR_ADDR_OF: {
+			return varAddr(p, e->as.addrOf.sym);
+		}
+
+		case EXPR_DEREF: {
+			return p->env.items[eval(e->as.deref.ptr, p)];
 		}
     }
     return 0;

@@ -7,6 +7,7 @@
     #include "scope.h"
     #include "parser.h"
     #include <stdio.h>
+	#include "types.h"
 #endif
 
 static inline Type* typecheck(Expr* e, Parser* p) {
@@ -48,7 +49,7 @@ static inline Type* typecheck(Expr* e, Parser* p) {
                 return e->type;
             }
 
-            if (val_t->kind != fn->retType->kind) {
+            if (!typeEquals(val_t, fn->retType)) {
                 fprintf(stderr, "TypeError: return value does not match function type.\n");
                 e->type = &type_err_inst;
                 return e->type;
@@ -110,7 +111,7 @@ static inline Type* typecheck(Expr* e, Parser* p) {
                 case TOKEN_GREATER_EQUAL:
                 case TOKEN_LESS:
                 case TOKEN_LESS_EQUAL: {
-                    if (left_t->kind != right_t->kind) {
+                    if (!typeEquals(left_t, right_t)) {
                         fprintf(stderr, "TypeError: cannot compare mismatched types.\n");
                         e->type = &type_err_inst;
                         return &type_err_inst;
@@ -136,7 +137,7 @@ static inline Type* typecheck(Expr* e, Parser* p) {
             Type* then_t = typecheck(e->as.conditional.thenBranch, p);
             if (e->as.conditional.elseBranch) {
                 Type* else_t = typecheck(e->as.conditional.elseBranch, p);
-                if (then_t->kind != else_t->kind) {
+                if (!typeEquals(then_t, else_t)) {
                     fprintf(stderr, "TypeError: both branches of a conditional expression should have matching types.\n");
                     e->type = &type_err_inst;
                     return &type_err_inst;
@@ -151,7 +152,7 @@ static inline Type* typecheck(Expr* e, Parser* p) {
             Type* init_t = typecheck(e->as.varDecl.value, p);
             Symbol* s = &p->symbolList.items[e->as.varDecl.sym];
 
-            if (s->type->kind != init_t->kind) {
+            if (!typeEquals(s->type, init_t)) {
                 fprintf(stderr, "TypeError: initializer type does not match explicit declaration.\n");
                 e->type = &type_err_inst;
                 return &type_err_inst;
@@ -177,7 +178,7 @@ static inline Type* typecheck(Expr* e, Parser* p) {
             Type* body_t = typecheck(e->as.function.body, p);
             p->currentFunction = saved;
 
-            if (body_t->kind != fn->retType->kind) {
+            if (!typeEquals(body_t, fn->retType)) {
                 fprintf(stderr, "TypeError: function type mismatch.\n");
 				e->type = &type_err_inst;
                 return &type_err_inst;
@@ -198,7 +199,7 @@ static inline Type* typecheck(Expr* e, Parser* p) {
 
             for (size_t i = 0; i < e->as.call.count; ++i) {
                 Type* arg_t = typecheck(e->as.call.args[i], p);
-                if (arg_t->kind != fn->paramTypes[i]->kind) {
+                if (!typeEquals(arg_t, fn->paramTypes[i])) {
                     fprintf(stderr, "TypeError: argument %zu type mismatch.\n", i);
 					e->type = &type_err_inst;
                     return &type_err_inst;
@@ -238,7 +239,7 @@ static inline Type* typecheck(Expr* e, Parser* p) {
             Symbol* s = &p->symbolList.items[e->as.varAssign.sym];
             Type* val_t = typecheck(e->as.varAssign.newValue, p);
 
-            if (s->type->kind != val_t->kind) {
+            if (!typeEquals(s->type, val_t)) {
                 fprintf(stderr, "TypeError: variable type mismatch on assignment.\n");
                 e->type = &type_err_inst;
                 return &type_err_inst;
@@ -261,6 +262,54 @@ static inline Type* typecheck(Expr* e, Parser* p) {
             e->type = &type_bool_inst;
             return &type_bool_inst;
         }
+
+		case EXPR_ADDR_OF: {
+			Symbol* s = &p->symbolList.items[e->as.addrOf.sym];
+			Type* t = typeAlloc(p);
+			t->kind = TYPE_PTR;
+			t->to = s->type;
+			e->type = t;
+			return e->type;
+		}
+
+		case EXPR_DEREF: {
+			Type* ptr_t = typecheck(e->as.deref.ptr, p);
+
+			if (ptr_t->kind == TYPE_ERR)  {
+				e->type = &type_err_inst;
+				return e->type;
+			}
+
+			if (ptr_t->kind != TYPE_PTR)  {
+				fprintf(stderr, "TypeError: cannot dereference a non-pointer.\n");
+				e->type = &type_err_inst;
+				return e->type;
+			}
+
+			e->type = ptr_t->to;
+			return e->type;
+		}
+
+		case EXPR_STORE: {
+			Type* ptr_t = typecheck(e->as.store.ptr, p);
+			Type* val_t = typecheck(e->as.store.value, p);
+			if (ptr_t->kind == TYPE_ERR || val_t->kind == TYPE_ERR) {
+				e->type = &type_err_inst;
+				return e->type;
+			}
+			if (ptr_t->kind != TYPE_PTR) {
+				fprintf(stderr, "TypeError: cannot store through a non-pointer.\n");
+				e->type = &type_err_inst;
+				return e->type;
+			}
+			if (!typeEquals(ptr_t->to, val_t)) {
+				fprintf(stderr, "TypeError: stored value does not match pointee type.\n");
+				e->type = &type_err_inst;
+				return e->type;
+			}
+			e->type = val_t;
+			return e->type;
+		}
     }
 	// default, but lets -Wswitch notify me instead of failing silently
 	e->type = &type_err_inst;
@@ -277,6 +326,16 @@ static inline Type* getTypeFromToken(Token t, Parser* p) {
 			fprintf(stderr, "Expected a valid type, got '%.*s' at line %zu\n", (int)t.length, p->source + t.start, t.line);
 			return &type_err_inst;
 	}
+}
+
+static inline Type* parseType(Parser* p) {
+	if (tokConsume(p, TOKEN_STAR, "*", false)) {
+		Type* t = typeAlloc(p);
+		t->kind = TYPE_PTR;
+		t->to = parseType(p);
+		return t;
+	}
+	return getTypeFromToken(tokAdvance(p), p);
 }
 
 #endif // TYPECHECK_H

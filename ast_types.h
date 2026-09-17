@@ -27,7 +27,10 @@ typedef enum {
 	EXPR_LOGICAL,
     EXPR_PRINT,
     EXPR_WHILE,
-    EXPR_RETURN
+    EXPR_RETURN,
+	EXPR_ADDR_OF,
+	EXPR_DEREF,
+	EXPR_STORE
 } ExprKind;
 
 #define TOKEN_LIST(X)\

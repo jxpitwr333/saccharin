@@ -74,6 +74,19 @@ struct Expr {
         struct {
             Expr* value;
         } ret;
+
+		struct {
+			int64_t sym;
+		} addrOf;
+
+		struct {
+			Expr* ptr;
+		} deref;
+
+		struct {
+			Expr* ptr;
+			Expr* value;
+		} store;
 	} as;
 };
 
@@ -101,5 +114,8 @@ Expr* makeInfix(Parser* p, Expr* left, Expr* right, TokenKind op);
 Expr* makeWhile(Parser* p, Expr* condition, Expr* body);
 Expr* makePrint(Parser* p, Expr* value);
 Expr* makeReturn(Parser* p, Expr* value);
+Expr* makeAddrOf(Parser*p, int64_t sym);
+Expr* makeDeref(Parser* p, Expr* ptr);
+Expr* makeStore(Parser* p, Expr* ptr, Expr* value);
 
 #endif

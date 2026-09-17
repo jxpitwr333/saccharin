@@ -22,6 +22,7 @@
 #include "parser.h"
 #include "scope.h"
 #include "pretty.h"
+#include "types.h"
 #include "typecheck.h"
 
 #include "token.c"

@@ -10,6 +10,7 @@
 	#include "arena.h"
 	#include <stdlib.h>
 	#include "parser.h"
+	#include "types.h"
 	#include "typecheck.h"
 #endif
 
@@ -45,9 +46,27 @@ Expr* parsePrimary(Parser* p) {
                 fprintf(stderr, "Expected ')'\n");
             return expr;
 		}
+		case TOKEN_AMPERSAND: {
+			Token target = tokPeek(p);
+			if (!tokConsume(p, TOKEN_IDENTIFIER, "identifier", true)) return makeNumber(p, 0);
+			int64_t sym = scopeResolve(p, target);
+			if (sym < 0) {
+				fprintf(stderr, "Expected '%.*s' at line '%zu'\n", (int)t.length, p->source + t.start, t.line);
+				return makeNumber(p, 0);
+			}
+			return makeAddrOf(p, sym);
+		}
         case TOKEN_MINUS: {
             Expr* operand = parseExpr(p, PREC_UNARY);
             return makeUnary(p, operand, TOKEN_MINUS);
+		}
+		case TOKEN_STAR: {
+			Expr* ptr = parseExpr(p, PREC_UNARY);
+			if (tokConsume(p, TOKEN_EQUAL, "=", false)) {
+				Expr* value = parseExpr(p, 0);
+				return makeStore(p, ptr, value);
+			}
+			return makeDeref(p, ptr);
 		}
 		case TOKEN_BANG: {
             Expr* operand = parseExpr(p, PREC_UNARY);
@@ -111,10 +130,7 @@ Expr* parsePrimary(Parser* p) {
             Token name = tokPeek(p);
             if (!tokConsume(p, TOKEN_IDENTIFIER, "identifier", true)) return makeNumber(p, 0);
 
-			if (!tokConsume(p, TOKEN_COLON, ":", true)) return makeNumber(p, 0);
-
-			Token typeTok = tokAdvance(p);
-			Type* type = getTypeFromToken(typeTok, p);
+			Type* type = parseType(p);
 
             tokConsume(p, TOKEN_EQUAL, "=", true);
             Expr* initializer = parseExpr(p, 0);
@@ -191,8 +207,7 @@ Expr* parsePrimary(Parser* p) {
 
 				if (!tokConsume(p, TOKEN_COLON, ":", true)) break;
 
-				Token typeTok = tokAdvance(p);
-				Type* type = getTypeFromToken(typeTok, p);
+				Type* type = parseType(p);
 
 				da_append(&tempTypes, type);
 
@@ -204,7 +219,7 @@ Expr* parsePrimary(Parser* p) {
 
 			tokConsume(p, TOKEN_COLON, ":", true);
 
-			Type* funType = getTypeFromToken(tokAdvance(p), p);
+			Type* funType = parseType(p);
 
 			p->functionList.items[index].paramTypes = arenaAlloc(&p->astArena, sizeof(Type*) * tempTypes.count);
 			memcpy(p->functionList.items[index].paramTypes, tempTypes.items, tempTypes.count * sizeof(Type*));
@@ -374,4 +389,26 @@ Expr* makeReturn(Parser* p, Expr* value) {
     e->kind = EXPR_RETURN;
     e->as.ret.value = value;
     return e;
+}
+
+Expr* makeAddrOf(Parser*p, int64_t sym) {
+	Expr* e = exprAlloc(p);
+	e->kind = EXPR_ADDR_OF;
+	e->as.addrOf.sym = sym;
+	return e;
+}
+
+Expr* makeDeref(Parser*p, Expr* ptr) {
+	Expr* e = exprAlloc(p);
+	e->kind = EXPR_DEREF;
+	e->as.deref.ptr = ptr;
+	return e;
+}
+
+Expr* makeStore(Parser* p, Expr* ptr, Expr* value) {
+	Expr* e = exprAlloc(p);
+	e->kind = EXPR_STORE;
+	e->as.store.ptr = ptr;
+	e->as.store.value = value;
+	return e;
 }
