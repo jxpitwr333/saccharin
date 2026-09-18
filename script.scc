@@ -1,0 +1,8 @@
+let i : i64 = 0;
+
+fun inc(n: *i64) : i64 {
+    return *n = *n + 1;
+}
+
+print inc(&i);
+print i;

@@ -212,6 +212,13 @@ int64_t eval(Expr* e, Parser* p) {
 		case EXPR_DEREF: {
 			return p->env.items[eval(e->as.deref.ptr, p)];
 		}
+
+		case EXPR_STORE: {
+            int64_t slot = eval(e->as.store.ptr, p);
+            int64_t val  = eval(e->as.store.value, p);
+            da_at(&p->env, val, slot);
+            return val;
+  		}
     }
     return 0;
 }

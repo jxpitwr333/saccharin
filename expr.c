@@ -27,7 +27,7 @@ static inline bool isBlockLike(Expr* e) {
 	return false;
 }
 
-Expr* parsePrimary(Parser* p) {
+Expr* parsePrimary(Parser* p, int minPrec) {
     Token t = tokAdvance(p);
     switch (t.kind) {
         case TOKEN_NUMBER_LITERAL: {
@@ -51,7 +51,7 @@ Expr* parsePrimary(Parser* p) {
 			if (!tokConsume(p, TOKEN_IDENTIFIER, "identifier", true)) return makeNumber(p, 0);
 			int64_t sym = scopeResolve(p, target);
 			if (sym < 0) {
-				fprintf(stderr, "Expected '%.*s' at line '%zu'\n", (int)t.length, p->source + t.start, t.line);
+				fprintf(stderr, "Undeclared identifier '%.*s' at line '%zu'\n", (int)target.length, p->source + target.start, target.line);
 				return makeNumber(p, 0);
 			}
 			return makeAddrOf(p, sym);
@@ -130,6 +130,8 @@ Expr* parsePrimary(Parser* p) {
             Token name = tokPeek(p);
             if (!tokConsume(p, TOKEN_IDENTIFIER, "identifier", true)) return makeNumber(p, 0);
 
+            if (!tokConsume(p, TOKEN_COLON, ":", true)) return makeNumber(p, 0);
+
 			Type* type = parseType(p);
 
             tokConsume(p, TOKEN_EQUAL, "=", true);
@@ -167,7 +169,7 @@ Expr* parsePrimary(Parser* p) {
 				return makeNumber(p, 0);
 			}
 
-			if (tokConsume(p, TOKEN_EQUAL, "=", false)) {
+			if (minPrec == 0 && tokConsume(p, TOKEN_EQUAL, "=", false)) {
 				Expr* newVal = parseExpr(p, 0);
 				return makeAssign(p, sym, newVal);
 			} else {
@@ -244,7 +246,7 @@ Expr* parsePrimary(Parser* p) {
 }
 
 Expr* parseExpr(Parser* p, int minPrec) {
-    Expr* left = parsePrimary(p);
+    Expr* left = parsePrimary(p, minPrec);
     if (isBlockLike(left)) return left;
 
     while (minPrec < precedenceOf(tokPeek(p).kind)) {

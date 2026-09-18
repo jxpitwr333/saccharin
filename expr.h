@@ -96,7 +96,7 @@ typedef struct {
     size_t count;
 } ExprList;
 
-Expr* parsePrimary(Parser* p);
+Expr* parsePrimary(Parser* p, int minPrec);
 Expr* parseExpr(Parser* p, int minPrec);
 Expr* makeNumber(Parser* p, int64_t value);
 Expr* makeBoolean(Parser* p, bool value);

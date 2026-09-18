@@ -29,7 +29,7 @@ static Type type_i64_inst = { .kind = TYPE_I64 };
 static Type type_err_inst = { .kind = TYPE_ERR };
 
 static inline Type* typeAlloc(Parser* p) {
-    Type* t = arenaAlloc(&p->astArena, sizeof(Type*));
+    Type* t = arenaAlloc(&p->astArena, sizeof(Type));
     t->to = NULL;
     return t;
 }
@@ -38,7 +38,7 @@ static inline bool typeEquals(Type* a, Type* b) {
     if (a->kind != b->kind) {
         return false;
     }
-    if (a->kind == TYPE_PTR) typeEquals(a->to, b->to);
+    if (a->kind == TYPE_PTR) return typeEquals(a->to, b->to);
     return true;
 }
 
